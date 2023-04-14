@@ -71,20 +71,10 @@ procedure_head : procedure_id params_list
 function_head : function_id params_list RARROW type_expression
               ;
 
-procedure_id : PROCEDURE IDENTIFIER {
-    push_symbol_table();
-    symbol_table->unit = 1;
-    label_no = 0;
-    printf("_%s:\n", $2.string);
-}
+procedure_id : PROCEDURE IDENTIFIER { handle_unit_id(&$2); }
              ;
 
-function_id : FUNCTION IDENTIFIER {
-    push_symbol_table();
-    symbol_table->unit = 1;
-    label_no = 0;
-    printf("_%s:\n", $2.string);
-}
+function_id : FUNCTION IDENTIFIER { handle_unit_id(&$2); }
             ;
 
 params_list : LPAREN params RPAREN

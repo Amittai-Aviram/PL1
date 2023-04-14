@@ -127,3 +127,10 @@ void handle_arg(Info * arg, Info * expression) {
     get_new_param(arg->string);
     printf("mov %s, %s\n", expression->string, arg->string);
 }
+
+void handle_unit_id(Info * identifier) {
+    push_symbol_table();
+    symbol_table->unit = 1;
+    label_no = 0;
+    printf("_%s:\n", identifier->string);
+}
