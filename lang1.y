@@ -246,11 +246,7 @@ args : args COMMA expression
      | arg
      ;
 
-arg : expression {
-    reset_params();
-    get_new_param($$.string);
-    printf("mov %s, %s\n", $1.string, $$.string);
-}
+arg : expression { handle_arg(&$$, &$1); }
      ;
 
 %%

@@ -19,4 +19,5 @@ void handle_arithmetic_expression(char * buffer, int op, char * a, char * b);
 void handle_assignment(char * buffer, char * source, char * destination);
 void handle_relational_expression(Info * lhs, int op, char * a, char * b);
 void handle_logical_expression(char * buffer, int op, char * a, char * b);
+void handle_arg(Info * arg, Info * expression);
 

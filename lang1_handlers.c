@@ -122,3 +122,8 @@ void handle_assignment(char * buffer, char * source, char * destination) {
     strcpy(buffer, destination);
 }
 
+void handle_arg(Info * arg, Info * expression) {
+    reset_params();
+    get_new_param(arg->string);
+    printf("mov %s, %s\n", expression->string, arg->string);
+}
