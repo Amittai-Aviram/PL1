@@ -1,0 +1,6 @@
+lang1
+lang1.tab.*
+lang1.lex.c
+*.output
+*.dSYM
+

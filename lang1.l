@@ -1,0 +1,86 @@
+%{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "hash_table.h"
+#include "lang1_handlers.h"
+#include "lang1.tab.h"
+#include "symbol_table.h"
+
+SymbolTable * symbol_table;
+extern int label_no;
+extern LabelNo * true_label_no_stack;
+extern LabelNo * false_label_no_stack;
+%}
+
+space [ \t\n]
+ws {space}+
+digit [0-9]
+number {digit}+
+identifier [a-zA-Z_][a-zA-Z_0-9]*
+
+%%
+
+{ws}
+boolean { yylval.type_id = BOOLEAN_TYPE; return BOOLEAN_TYPE; }
+int1 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
+uint1 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
+int2 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
+uint2 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
+int4 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
+uint4 { yylval.type_id = UINT4_TYPE; return UINT4_TYPE; }
+int8 { yylval.type_id = INT8_TYPE; return INT8_TYPE; }
+uint8 { yylval.type_id = INT8_TYPE; return INT8_TYPE; }
+addrtype { yylval.type_id = ADDRESS_TYPE; return ADDRESS_TYPE; }
+procedure { return PROCEDURE; }
+function { return FUNCTION; }
+run { return RUN; }
+if { return IF; }
+else { printf("jmp _BB_%d\n", push_label_no(1)); printf("_BB_%d\n", pop_label_no(0)); return ELSE; }
+while { return WHILE; }
+for { return FOR; }
+from { return FROM; }
+to { return TO; }
+by { return BY; }
+or { return OR; }
+and { return AND; }
+return { return RETURN; }
+{number} {
+    strcpy(yylval.info.string, yytext);
+    return NUMBER;
+}
+{identifier} {
+    strcpy(yylval.info.string, yytext);
+    if (!symbol_table_get(symbol_table, yytext)) {
+        symbol_table_put(symbol_table, yytext, new_identifier_entry(yytext, 0));
+    }
+    return IDENTIFIER;
+}
+"<-" { return LARROW; }
+"->" { return RARROW; }
+\: { return COLON; }
+\( { return LPAREN; }
+\) { return RPAREN; }
+\{ { return LBRACE; }
+\} { return RBRACE; }
+"+" { return PLUS; }
+"-" { return MINUS; }
+"*" { return TIMES; }
+"/" { return DIV; }
+"%" { return MOD; }
+"==" { return EQ; }
+"~=" { return NE; }
+"<" { return LT; }
+"<=" { return LE; }
+">=" { return GE; }
+">" { return GT; }
+"@" { return DEREFERENCE; }
+\, { return COMMA; }
+\. { return PERIOD; }
+
+%%
+#pragma GCC diagnostic pop
