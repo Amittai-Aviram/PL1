@@ -17,6 +17,7 @@ void get_new_param(char * buffer);
 void reset_params();
 void handle_assignment(Info * lhs, Info * source, Info * destination);
 void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b);
+void handle_unary_minus_expression(Info * lhs, Info * expr);
 void handle_relational_expression(Info * lhs, int op, Info * a, Info * b);
 void handle_logical_expression(Info * lhs, int op, Info * a, Info * b);
 void handle_arg(Info * arg, Info * expression);

@@ -167,7 +167,7 @@ expression : arithmetic_expression
            | logical_expression
            | function_call_expression
            | dereference_expression
-           | MINUS expression %prec UMINUS /* {handle_arithmetic_expression($$.string, MINUS, "0", $2.string); } */
+           | MINUS expression %prec UMINUS { handle_unary_minus_expression(&$$, &$2); }
            | NUMBER { handle_number(&$$, &$1); }
            | IDENTIFIER { handle_identifier(&$$, &$1); }
            | LPAREN expression RPAREN { $$ = $2; }

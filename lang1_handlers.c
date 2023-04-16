@@ -111,6 +111,11 @@ void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
     lhs->type_id = promote_integer_type(a->type_id, b->type_id);
 }
 
+void handle_unary_minus_expression(Info * lhs, Info * expr) {
+    Info zero = { "0", expr->type_id };
+    handle_arithmetic_expression(lhs, MINUS, &zero, expr);
+}
+
 void handle_relational_expression(Info * lhs, int op, Info * a, Info * b) {
     get_new_register(lhs->string);
     lhs->type_id = BOOLEAN_TYPE;
