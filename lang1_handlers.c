@@ -117,9 +117,12 @@ void handle_relational_expression(Info * lhs, int op, char * a, char * b) {
 void handle_logical_expression(char * buffer, int op, char * a, char * b) {
 }
 
-void handle_assignment(char * buffer, char * source, char * destination) {
-    printf("mov %s, %s\n", source, destination);
-    strcpy(buffer, destination);
+void handle_assignment(Info * lhs, Info * source, Info * destination) {
+    printf("mov %s, %s\n", source->string, destination->string);
+    if (lhs) {
+        strcpy(lhs->string, destination->string);
+        lhs->type_id = source->type_id;
+    }
 }
 
 void handle_arg(Info * arg, Info * expression) {
@@ -133,4 +136,43 @@ void handle_unit_id(Info * identifier) {
     symbol_table->unit = 1;
     label_no = 0;
     printf("_%s:\n", identifier->string);
+}
+
+void handle_param(Info * lhs, Info * var_decl) {
+    Info next_param;
+    get_new_param(next_param.string);
+    next_param.type_id = var_decl->type_id;
+    handle_assignment(lhs, &next_param, var_decl);
+}
+
+void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
+    IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
+    id_entry->type = decl_type;
+    get_new_mem(id_entry->symbol);
+    strcpy(lhs->string, id_entry->symbol);
+    lhs->type_id = id_entry->type;
+}
+
+void handle_initialization(Info * var_decl, Info * value) {
+    handle_assignment(NULL, value, var_decl);
+}
+
+void handle_condition(int true) {
+    printf("_BB_%d\n", pop_label_no(true));
+}
+
+void handle_condition_head(Info * cond_expr) {
+    printf("test %s, %s\n", cond_expr->string, cond_expr->string);
+    printf("jz _BB_%d\n", push_label_no(0));
+}
+
+void handle_number(Info * lhs, Info * num) {
+    strcpy(lhs->string, num->string);
+    lhs->type_id = INT4_TYPE;
+}
+
+void handle_identifier(Info * lhs, Info * identifier) {
+    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
+    strcpy(lhs->string, entry->symbol);
+    lhs->type_id = entry->type;
 }

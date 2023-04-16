@@ -29,12 +29,12 @@ LabelNo * false_label_no_stack;
 %{
 %}
 
-%token <type_id> BOOLEAN_TYPE INT1_TYPE UINT1_TYPE INT2_TYPE UINT2_TYPE
-%token <type_id> INT4_TYPE UINT4_TYPE INT8_TYPE UINT8_TYPE ADDRESS_TYPE
-%token <info> IDENTIFIER NUMBER MINUS
 %token PROCEDURE FUNCTION RUN IF ELSE WHILE FOR FROM TO BY RETURN
 %token PERIOD COLON LPAREN RPAREN LBRACE RBRACE LARROW RARROW COMMA DEREFERENCE
 %token PLUS TIMES DIV MOD EQ NE LT LE GE GT
+%token <type_id> BOOLEAN_TYPE INT1_TYPE UINT1_TYPE INT2_TYPE UINT2_TYPE
+%token <type_id> INT4_TYPE UINT4_TYPE INT8_TYPE UINT8_TYPE ADDRESS_TYPE
+%token <info> IDENTIFIER NUMBER MINUS
 %type <type_id> type_expression
 %type <info> expression arithmetic_expression relational_expression logical_expression
 %type <info> function_call_expression dereference_expression procedure_id function_id 
@@ -102,11 +102,7 @@ params : params COMMA param
        |
        ;
 
-param : variable_declaration {
-    char next_param[LEXEME_SIZE];
-    get_new_param(next_param);
-    handle_assignment($$.string, next_param, $1.string);
-}
+param : variable_declaration { handle_param(&$$, &$1); }
       ;
 
 
@@ -136,33 +132,24 @@ statement : initialized_variable_declaration_statement
           ;
 
 initialized_variable_declaration_statement : variable_declaration LARROW expression PERIOD
-                                               { printf("mov %s, %s\n", $3.string, $1.string); }
+    { handle_initialization(&$1, &$3); }
                                            ;
 
 variable_declaration_statement : variable_declaration PERIOD
                      ;
                                ;
-assignment_statement : IDENTIFIER LARROW expression PERIOD {
-    printf("mov %s, ", $3.string);
-    printf("%s\n", ((IdentifierEntry *)symbol_table_get(symbol_table, $1.string))->symbol);
-}
-                     | expression RARROW IDENTIFIER PERIOD {
-    printf("mov %s, ", $1.string);
-    printf("%s\n", ((IdentifierEntry *)symbol_table_get(symbol_table, $3.string))->symbol);
-}
+assignment_statement : IDENTIFIER LARROW expression PERIOD { handle_assignment(NULL, &$3, &$1); }
+                     | expression RARROW IDENTIFIER PERIOD { handle_assignment(NULL, &$1, &$3); }
                      ;
 
 procedure_call_statement : RUN IDENTIFIER LPAREN args RPAREN PERIOD
                          ;
 
-conditional_statement : condition_head block ELSE block { printf("_BB_%d\n", pop_label_no(1)); }
-                      | condition_head block { printf("_BB_%d\n", pop_label_no(0)); }
+conditional_statement : condition_head block ELSE block { handle_condition(1); }
+                      | condition_head block { handle_condition(0); }
                       ;
 
-condition_head : IF LPAREN expression RPAREN {
-    printf("test %s, %s\n", $3.string, $3.string);
-    printf("jz _BB_%d\n", push_label_no(0));
-}
+condition_head : IF LPAREN expression RPAREN { handle_condition_head(&$3); }
                ;
 
 iteration_statement : WHILE LPAREN expression RPAREN LBRACE expression RBRACE
@@ -172,12 +159,7 @@ iteration_statement : WHILE LPAREN expression RPAREN LBRACE expression RBRACE
 
 return_statement : RETURN expression PERIOD { printf("mov %s, $ret\n", $2.string); printf("ret\n"); }
 
-variable_declaration : IDENTIFIER COLON type_expression {
-    IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, $1.string);
-    id_entry->type = $3;
-    get_new_mem(id_entry->symbol);
-    strcpy($$.string, id_entry->symbol);
-}
+variable_declaration : IDENTIFIER COLON type_expression { handle_variable_declaration( &$$, &$1, $3); }
                      ;
 
 expression : arithmetic_expression
@@ -186,16 +168,9 @@ expression : arithmetic_expression
            | function_call_expression
            | dereference_expression
            | MINUS expression %prec UMINUS {handle_arithmetic_expression($$.string, MINUS, "0", $2.string); }
-           | NUMBER {
-    strcpy($$.string, $1.string);
-    $$.type_id = INT4_TYPE;
-}
-           | IDENTIFIER {
-    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, $1.string);
-    strcpy($$.string, entry->symbol);
-    $$.type_id = entry->type;
-}
-           | LPAREN expression RPAREN { strcpy($$.string, $2.string); }
+           | NUMBER { handle_number(&$$, &$1); }
+           | IDENTIFIER { handle_identifier(&$$, &$1); }
+           | LPAREN expression RPAREN { $$ = $2; }
            ;
 
 arithmetic_expression : expression PLUS expression { handle_arithmetic_expression($$.string, PLUS, $1.string, $3.string); }
