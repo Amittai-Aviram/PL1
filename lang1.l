@@ -48,6 +48,7 @@ to { return TO; }
 by { return BY; }
 or { return OR; }
 and { return AND; }
+not { return NOT; }
 return { return RETURN; }
 {number} {
     strcpy(yylval.info.string, yytext);

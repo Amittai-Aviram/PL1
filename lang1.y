@@ -31,7 +31,7 @@ LabelNo * false_label_no_stack;
 
 %token PROCEDURE FUNCTION RUN IF ELSE WHILE FOR FROM TO BY RETURN
 %token PERIOD COLON LPAREN RPAREN LBRACE RBRACE LARROW RARROW COMMA DEREFERENCE
-%token PLUS TIMES DIV MOD EQ NE LT LE GE GT
+%token PLUS TIMES DIV MOD EQ NE LT LE GE GT AND OR NOT
 %token <type_id> BOOLEAN_TYPE INT1_TYPE UINT1_TYPE INT2_TYPE UINT2_TYPE
 %token <type_id> INT4_TYPE UINT4_TYPE INT8_TYPE UINT8_TYPE ADDRESS_TYPE
 %token <info> IDENTIFIER NUMBER MINUS
@@ -46,7 +46,7 @@ LabelNo * false_label_no_stack;
 %left LT LE GT GE
 %left PLUS MINUS
 %left TIMES DIV MOD
-%right DEREFERENCE UMINUS
+%right DEREFERENCE UMINUS NOT
 %%
 
 program : unit_definitions { puts("Done."); }
@@ -180,16 +180,17 @@ arithmetic_expression : expression PLUS expression { handle_arithmetic_expressio
         | expression MOD expression { handle_arithmetic_expression(&$$, MOD, &$1, &$3); }
         ;
 
-relational_expression : expression EQ expression { handle_relational_expression(&$$, EQ, $1.string, $3.string); }
-        | expression NE expression { handle_relational_expression(&$$, NE, $1.string, $3.string); }
-        | expression LT expression { handle_relational_expression(&$$, LT, $1.string, $3.string); }
-        | expression LE expression { handle_relational_expression(&$$, LE, $1.string, $3.string); }
-        | expression GE expression { handle_relational_expression(&$$, GE, $1.string, $3.string); }
-        | expression GT expression { handle_relational_expression(&$$, GT, $1.string, $3.string); }
+relational_expression : expression EQ expression { handle_relational_expression(&$$, EQ, &$1, &$3); }
+        | expression NE expression { handle_relational_expression(&$$, NE, &$1, &$3); }
+        | expression LT expression { handle_relational_expression(&$$, LT, &$1, &$3); }
+        | expression LE expression { handle_relational_expression(&$$, LE, &$1, &$3); }
+        | expression GE expression { handle_relational_expression(&$$, GE, &$1, &$3); }
+        | expression GT expression { handle_relational_expression(&$$, GT, &$1, &$3); }
         ;
 
-logical_expression : expression AND expression { handle_logical_expression($$.string, AND, $1.string, $3.string); }
-        | expression OR expression { handle_logical_expression($$.string, OR, $1.string, $3.string); }
+logical_expression : expression AND expression { handle_logical_expression(&$$, AND, &$1, &$3); }
+        | expression OR expression { handle_logical_expression(&$$, OR, &$1, &$3); }
+        | NOT expression { handle_logical_expression(&$$, NOT, &$2, NULL); }
         ;
 
 function_call_expression : IDENTIFIER LPAREN args RPAREN {

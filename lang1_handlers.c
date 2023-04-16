@@ -111,10 +111,10 @@ void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
     lhs->type_id = promote_integer_type(a->type_id, b->type_id);
 }
 
-void handle_relational_expression(Info * lhs, int op, char * a, char * b) {
+void handle_relational_expression(Info * lhs, int op, Info * a, Info * b) {
     get_new_register(lhs->string);
     lhs->type_id = BOOLEAN_TYPE;
-    printf("cmp %s, %s\n", b, a);
+    printf("cmp %s, %s\n", b->string, a->string);
     printf("set");
     switch(op) {
         case EQ:
@@ -139,7 +139,24 @@ void handle_relational_expression(Info * lhs, int op, char * a, char * b) {
     printf(" %s\n", lhs->string);
 }
 
-void handle_logical_expression(char * buffer, int op, char * a, char * b) {
+void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
+    if (!is_register(b)) {
+        move_to_register(b);
+    }
+    if (a->type_id != BOOLEAN_TYPE) {
+        convert_to_boolean(a);
+    }
+    if (b->type_id != BOOLEAN_TYPE) {
+        convert_to_boolean(b);
+    }
+    switch (op) {
+        case AND:
+            printf("and %s, %s\n", a->string, b->string);
+            break;
+        case OR:
+            printf("or %s, %s\n", a->string, b->string);
+            break;
+    }
 }
 
 void handle_assignment(Info * lhs, Info * source, Info * destination) {
