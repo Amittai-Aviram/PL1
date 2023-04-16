@@ -167,17 +167,17 @@ expression : arithmetic_expression
            | logical_expression
            | function_call_expression
            | dereference_expression
-           | MINUS expression %prec UMINUS {handle_arithmetic_expression($$.string, MINUS, "0", $2.string); }
+           | MINUS expression %prec UMINUS /* {handle_arithmetic_expression($$.string, MINUS, "0", $2.string); } */
            | NUMBER { handle_number(&$$, &$1); }
            | IDENTIFIER { handle_identifier(&$$, &$1); }
            | LPAREN expression RPAREN { $$ = $2; }
            ;
 
-arithmetic_expression : expression PLUS expression { handle_arithmetic_expression($$.string, PLUS, $1.string, $3.string); }
-        | expression MINUS expression { handle_arithmetic_expression($$.string, MINUS, $1.string, $3.string); }
-        | expression TIMES expression { handle_arithmetic_expression($$.string, TIMES, $1.string, $3.string); }
-        | expression DIV expression { handle_arithmetic_expression($$.string, DIV, $1.string, $3.string); }
-        | expression MOD expression { handle_arithmetic_expression($$.string, MOD, $1.string, $3.string); }
+arithmetic_expression : expression PLUS expression { handle_arithmetic_expression(&$$, PLUS, &$1, &$3); }
+        | expression MINUS expression { handle_arithmetic_expression(&$$, MINUS, &$1, &$3); }
+        | expression TIMES expression { handle_arithmetic_expression(&$$, TIMES, &$1, &$3); }
+        | expression DIV expression { handle_arithmetic_expression(&$$, DIV, &$1, &$3); }
+        | expression MOD expression { handle_arithmetic_expression(&$$, MOD, &$1, &$3); }
         ;
 
 relational_expression : expression EQ expression { handle_relational_expression(&$$, EQ, $1.string, $3.string); }

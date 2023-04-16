@@ -58,12 +58,36 @@ void reset_params() {
     symbol_table->param_no = 0;
 }
 
-void handle_arithmetic_expression(char * buffer, int op, char * a, char * b) {
-    if (strncmp(b, "$r", 2)) {
+int is_register(Info * expr) {
+    return !strncmp(expr->string, "$r", 2);
+}
+
+void move_to_register(Info * expr) {
+    char new_reg[8];
+    get_new_register(new_reg);
+    printf("mov %s, %s\n", expr->string, new_reg); 
+    strcpy(expr->string, new_reg);
+}
+
+int promote_integer_type(int type_a, int type_b) {
+    return (type_a >= type_b) ? type_a : type_b;
+}
+
+void convert_to_boolean(Info * expr) {
+    if (!is_register(expr)) {
+        move_to_register(expr);
+    }
+    printf("test %s, %s\n", expr->string, expr->string);
+    printf("setnz %s\n", expr->string);
+    expr->type_id = BOOLEAN_TYPE;
+}
+
+void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
+    if (!is_register(b)) {
         char new_reg[8];
         get_new_register(new_reg);
-        printf("mov %s, %s\n", b, new_reg);
-        strcpy(b, new_reg);
+        printf("mov %s, %s\n", b->string, new_reg);
+        strcpy(b->string, new_reg);
     }
     switch(op) {
         case PLUS:
@@ -82,8 +106,9 @@ void handle_arithmetic_expression(char * buffer, int op, char * a, char * b) {
             printf("mod ");
             break;
     }
-    printf("%s, %s\n", a, b);
-    strcpy(buffer, b);
+    printf("%s, %s\n", a->string, b->string);
+    strcpy(lhs->string, b->string);
+    lhs->type_id = promote_integer_type(a->type_id, b->type_id);
 }
 
 void handle_relational_expression(Info * lhs, int op, char * a, char * b) {
