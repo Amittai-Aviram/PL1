@@ -40,7 +40,7 @@ procedure { return PROCEDURE; }
 function { return FUNCTION; }
 run { return RUN; }
 if { return IF; }
-else { printf("jmp _BB_%d\n", push_label_no(1)); printf("_BB_%d\n", pop_label_no(0)); return ELSE; }
+else { handle_else(); return ELSE; }
 while { return WHILE; }
 for { return FOR; }
 from { return FROM; }

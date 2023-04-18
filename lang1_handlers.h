@@ -27,6 +27,7 @@ void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type);
 void handle_initialization(Info * var_decl, Info * value);
 void handle_condition(int true);
 void handle_condition_head(Info * cond_expr);
+void handle_else();
 void handle_number(Info * lhs, Info * num);
 void handle_identifier(Info * lhs, Info * identifier);
 

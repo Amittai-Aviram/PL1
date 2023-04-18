@@ -213,6 +213,11 @@ void handle_condition_head(Info * cond_expr) {
     printf("jz _BB_%d\n", push_label_no(0));
 }
 
+void handle_else() {
+    printf("jmp _BB_%d\n", push_label_no(1));
+    printf("_BB_%d\n", pop_label_no(0));
+}
+
 void handle_number(Info * lhs, Info * num) {
     strcpy(lhs->string, num->string);
     lhs->type_id = INT4_TYPE;
