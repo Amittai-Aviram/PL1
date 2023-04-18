@@ -8,11 +8,11 @@
 
 #include "hash_table.h"
 #include "lang1_handlers.h"
-#include "lang1.tab.h"
 #include "symbol_table.h"
+#include "lang1.tab.h"
 
 SymbolTable * symbol_table;
-int line_no;
+int line_no = 1;
 extern int label_no;
 extern LabelNo * true_label_no_stack;
 extern LabelNo * false_label_no_stack;

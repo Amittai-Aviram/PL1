@@ -4,7 +4,7 @@ mov $m0, $r0
 imul $m0, $r0
 mov $m0, $r1
 imul $r0, $r1
-mov $r1, r
+mov $r1, $m1
 mov $m1, $ret
 ret
 
@@ -14,11 +14,10 @@ add 3, $r0
 mov $r0, $m0
 mov $m0, $p0
 call _cube
-mov $ret, a
-mov 7, $m1
-cmp 0, $m1
+mov $ret, $m0
+cmp 0, $m0
 setg $r1
-cmp 25, $m1
+cmp 25, $m0
 setl $r2
 and $r1, $r2
 test $r1, $r1

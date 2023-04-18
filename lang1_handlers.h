@@ -1,3 +1,5 @@
+#define MESSAGE_SIZE 256
+
 typedef struct Info {
     char string[256];
     int type_id;

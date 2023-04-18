@@ -3,9 +3,10 @@
 #include <string.h>
 
 #include "lang1_handlers.h"
-#include "lang1.tab.h"
 #include "symbol_table.h"
+#include "lang1.tab.h"
 
+extern int line_no;
 extern int label_no;
 extern LabelNo * true_label_no_stack;
 extern LabelNo * false_label_no_stack;
@@ -63,7 +64,7 @@ int is_register(Info * expr) {
 }
 
 void move_to_register(Info * expr) {
-    char new_reg[8];
+    char new_reg[SYMBOL_SIZE];
     get_new_register(new_reg);
     printf("mov %s, %s\n", expr->string, new_reg); 
     strcpy(expr->string, new_reg);
@@ -84,7 +85,7 @@ void convert_to_boolean(Info * expr) {
 
 void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
     if (!is_register(b)) {
-        char new_reg[8];
+        char new_reg[SYMBOL_SIZE];
         get_new_register(new_reg);
         printf("mov %s, %s\n", b->string, new_reg);
         strcpy(b->string, new_reg);
@@ -165,6 +166,10 @@ void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
 }
 
 void handle_assignment(Info * lhs, Info * source, Info * destination) {
+    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, destination->string);
+    if (entry && entry->id_type == VAR) {
+        strcpy(destination->string, entry->symbol);
+    }
     printf("mov %s, %s\n", source->string, destination->string);
     if (lhs) {
         strcpy(lhs->string, destination->string);
@@ -189,15 +194,25 @@ void handle_param(Info * lhs, Info * var_decl) {
     Info next_param;
     get_new_param(next_param.string);
     next_param.type_id = var_decl->type_id;
-    handle_assignment(lhs, &next_param, var_decl);
+    printf("mov %s, %s\n", next_param.string, var_decl->string);
+    strcpy(lhs->string, var_decl->string);
+    lhs->type_id = var_decl->type_id;
 }
 
 void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
     IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
-    id_entry->type = decl_type;
+    if (id_entry->line_num >= 0) {
+        char msg[MESSAGE_SIZE];
+        sprintf(msg, "Error (line %d): identifier %s has already been declared at line %d.\n",
+                line_no - 1, identifier->string, id_entry->line_num);
+        yyerror(msg);
+    }
+    id_entry->id_type = VAR;
+    id_entry->type_id = decl_type;
+    id_entry->line_num = line_no;
     get_new_mem(id_entry->symbol);
     strcpy(lhs->string, id_entry->symbol);
-    lhs->type_id = id_entry->type;
+    lhs->type_id = id_entry->type_id;
 }
 
 void handle_initialization(Info * var_decl, Info * value) {
@@ -225,7 +240,7 @@ void handle_number(Info * lhs, Info * num) {
 
 void handle_identifier_lexeme(Info * val, char * text) {
     if (!symbol_table_get(symbol_table, text)) {
-        symbol_table_put(symbol_table, text, new_identifier_entry(text, 0));
+        symbol_table_put(symbol_table, text, new_identifier_entry(text, -1, -1, -1));
     }
     strcpy(val->string, text);
 }
@@ -233,5 +248,6 @@ void handle_identifier_lexeme(Info * val, char * text) {
 void handle_identifier(Info * lhs, Info * identifier) {
     IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
     strcpy(lhs->string, entry->symbol);
-    lhs->type_id = entry->type;
+    lhs->type_id = entry->type_id;
 }
+

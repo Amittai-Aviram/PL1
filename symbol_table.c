@@ -54,10 +54,14 @@ void * symbol_table_put(SymbolTable * this, const char * const key, void * value
     return hash_table_put(this->hash_table, key, value);
 }
 
-IdentifierEntry * new_identifier_entry(const char * const lexeme, const int type) {
+IdentifierEntry * new_identifier_entry(
+        const char * const lexeme, const int type_id, const int base_type_id, const int line_num
+        ) {
     IdentifierEntry * entry = malloc(sizeof(IdentifierEntry));
     strcpy(entry->lexeme, lexeme);
-    entry->type = type;
+    entry->type_id = type_id;
+    entry->base_type_id = base_type_id;
+    entry->line_num = line_num;
     return entry;
 }
 

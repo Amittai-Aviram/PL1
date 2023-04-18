@@ -169,7 +169,7 @@ void hash_table_print(HashTable * this) {
                 IdentifierEntry * id_entry = (IdentifierEntry *)entry->value;
                 printf("\t%s\n", id_entry->lexeme);
                 printf("\t%s\n", id_entry->symbol);
-                printf("\t%d\n", id_entry->type);
+                printf("\t%d\n", id_entry->type_id);
                 entry = entry->next;
             }
         }

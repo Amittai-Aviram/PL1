@@ -6,6 +6,9 @@
 #include "hash_table.h"
 
 #define LEXEME_SIZE 256
+#define SYMBOL_SIZE 8
+
+typedef enum IdentifierType { NONE, VAR, FUNC, PROC } IdentifierType;
 
 typedef struct SymbolTable {
     struct HashTable * hash_table;
@@ -17,9 +20,12 @@ typedef struct SymbolTable {
 } SymbolTable;
 
 typedef struct IdentifierEntry {
+    IdentifierType id_type;
     char lexeme[LEXEME_SIZE];
-    char symbol[LEXEME_SIZE];
-    int type;
+    char symbol[SYMBOL_SIZE];
+    int type_id;
+    int base_type_id;
+    int line_num;
 } IdentifierEntry;
 
 typedef struct NumberEntry {
@@ -34,6 +40,8 @@ void push_symbol_table();
 void pop_symbol_table();
 void * symbol_table_get(SymbolTable * this, const char * const key);
 void * symbol_table_put(SymbolTable * this, const char * const key, void * value);
-IdentifierEntry * new_identifier_entry(const char * const lexeme, const int type_id);
+IdentifierEntry * new_identifier_entry(
+        const char * const lexeme, const int type_id, const int base_type_id, const int line_num
+        );
 NumberEntry * new_number_entry(const char * const lexeme, const int type_id);
 void symbol_table_print(SymbolTable * this);

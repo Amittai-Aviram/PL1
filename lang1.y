@@ -6,8 +6,8 @@
 
 #include "hash_table.h"
 #include "lang1_handlers.h"
-#include "lang1.tab.h"
 #include "symbol_table.h"
+#include "lang1.tab.h"
 
 int yylex();
 int yyerror(const char * msg);
@@ -23,7 +23,7 @@ LabelNo * false_label_no_stack;
 
 %union {
     Info info;
-    char string[256];
+    char string[LEXEME_SIZE];
     int type_id;
 }
 
@@ -222,7 +222,7 @@ arg : expression { handle_arg(&$$, &$1); }
 
 int yyerror(const char * msg) {
     fprintf(stderr, "%s\n", msg);
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
 }
 
 FILE * fopen_checked(const char * const file_name, const char * const mode) {
