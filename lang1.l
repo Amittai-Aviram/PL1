@@ -12,12 +12,13 @@
 #include "symbol_table.h"
 
 SymbolTable * symbol_table;
+int line_no;
 extern int label_no;
 extern LabelNo * true_label_no_stack;
 extern LabelNo * false_label_no_stack;
 %}
 
-space [ \t\n]
+space [ \t]
 ws {space}+
 digit [0-9]
 number {digit}+
@@ -26,6 +27,7 @@ identifier [a-zA-Z_][a-zA-Z_0-9]*
 %%
 
 {ws}
+"\n" { ++line_no; }
 boolean { yylval.type_id = BOOLEAN_TYPE; return BOOLEAN_TYPE; }
 int1 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
 uint1 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }

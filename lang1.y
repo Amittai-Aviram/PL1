@@ -14,6 +14,7 @@ int yyerror(const char * msg);
 
 extern FILE * yyin;
 extern SymbolTable * symbol_table;
+extern int line_no;
 int label_no;
 LabelNo * true_label_no_stack;
 LabelNo * false_label_no_stack;
@@ -26,8 +27,10 @@ LabelNo * false_label_no_stack;
     int type_id;
 }
 
-%{
-%}
+%code provides {
+    int yylex();
+    int yyerror(const char * msg);
+}
 
 %token PROCEDURE FUNCTION RUN IF ELSE WHILE FOR FROM TO BY RETURN
 %token PERIOD COLON LPAREN RPAREN LBRACE RBRACE LARROW RARROW COMMA DEREFERENCE
