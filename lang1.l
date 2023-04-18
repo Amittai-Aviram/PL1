@@ -52,17 +52,8 @@ or { return OR; }
 and { return AND; }
 not { return NOT; }
 return { return RETURN; }
-{number} {
-    strcpy(yylval.info.string, yytext);
-    return NUMBER;
-}
-{identifier} {
-    strcpy(yylval.info.string, yytext);
-    if (!symbol_table_get(symbol_table, yytext)) {
-        symbol_table_put(symbol_table, yytext, new_identifier_entry(yytext, 0));
-    }
-    return IDENTIFIER;
-}
+{number} { strcpy(yylval.info.string, yytext); return NUMBER; }
+{identifier} { handle_identifier_lexeme(&yylval.info, yytext); return IDENTIFIER; }
 "<-" { return LARROW; }
 "->" { return RARROW; }
 \: { return COLON; }

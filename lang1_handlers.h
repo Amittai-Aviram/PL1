@@ -29,5 +29,6 @@ void handle_condition(int true);
 void handle_condition_head(Info * cond_expr);
 void handle_else();
 void handle_number(Info * lhs, Info * num);
+void handle_identifier_lexeme(Info * val, char * text);
 void handle_identifier(Info * lhs, Info * identifier);
 

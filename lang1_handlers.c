@@ -223,6 +223,13 @@ void handle_number(Info * lhs, Info * num) {
     lhs->type_id = INT4_TYPE;
 }
 
+void handle_identifier_lexeme(Info * val, char * text) {
+    if (!symbol_table_get(symbol_table, text)) {
+        symbol_table_put(symbol_table, text, new_identifier_entry(text, 0));
+    }
+    strcpy(val->string, text);
+}
+
 void handle_identifier(Info * lhs, Info * identifier) {
     IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
     strcpy(lhs->string, entry->symbol);
