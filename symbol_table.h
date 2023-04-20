@@ -45,4 +45,4 @@ IdentifierEntry * new_identifier_entry(
         const char * const lexeme, const int type_id, const int base_type_id, const int line_num
         );
 NumberEntry * new_number_entry(const char * const lexeme, const int type_id);
-void symbol_table_print(SymbolTable * this);
+

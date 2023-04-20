@@ -16,7 +16,7 @@ SymbolTable * new_symbol_table() {
     new_table->reg_no = 0;
     new_table->mem_no = 0;
     new_table->param_no = 0;
-    new_table->unit = 0;
+    new_table->unit_started = 0;
     new_table->next = NULL;
     return new_table;
 }
@@ -72,6 +72,3 @@ NumberEntry * new_number_entry(const char * const lexeme, const int type) {
     return entry;
 }
 
-void symbol_table_print(SymbolTable * this) {
-    hash_table_print(this->hash_table);
-}
