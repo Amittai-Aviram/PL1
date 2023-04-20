@@ -15,9 +15,10 @@ extern SymbolTable * symbol_table;
 
 void report_error(const char * format, ...) {
     char msg[MESSAGE_SIZE];
+    sprintf(msg, "Error (line %d): ", line_no - 1);
     va_list args;
     va_start(args, format);
-    vsprintf(msg, format, args);
+    vsprintf(msg + strlen(msg), format, args);
     va_end(args);
     yyerror(msg);
 }
@@ -196,6 +197,11 @@ void handle_arg(Info * arg, Info * expression) {
 }
 
 void handle_unit_id(Info * identifier) {
+    char * unit_id = symbol_table_remove(symbol_table, identifier->string);
+    if (!unit_id) {
+        report_error("Unit identifier %s is missing from the symbol table.\n");
+    }
+    strcpy(symbol_table->name, unit_id);
     push_symbol_table();
     symbol_table->unit_started = 1;
     label_no = 0;
@@ -214,8 +220,8 @@ void handle_param(Info * lhs, Info * var_decl) {
 void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
     IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
     if (id_entry->line_num >= 0) {
-        report_error("Error (line %d): identifier %s has already been declared at line %d.\n",
-                line_no - 1, identifier->string, id_entry->line_num);
+        report_error("Identifier %s has already been declared at line %d.\n",
+                identifier->string, id_entry->line_num);
     }
     id_entry->id_type = VAR;
     id_entry->type_id = decl_type;
@@ -250,7 +256,6 @@ void handle_number(Info * lhs, Info * num) {
 
 void handle_identifier_lexeme(Info * val, char * text) {
     if (!symbol_table_get(symbol_table, text)) {
-        printf("Inserting %s into symbol table %p\n", text, symbol_table);
         symbol_table_put(symbol_table, text, new_identifier_entry(text, -1, -1, -1));
     }
     strcpy(val->string, text);

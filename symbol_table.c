@@ -12,6 +12,7 @@ extern SymbolTable * symbol_table;
 
 SymbolTable * new_symbol_table() {
     SymbolTable * new_table = malloc(sizeof(SymbolTable));
+    bzero(new_table->name, LEXEME_SIZE);
     new_table->hash_table = new_hash_table();
     new_table->reg_no = 0;
     new_table->mem_no = 0;
@@ -33,11 +34,9 @@ void push_symbol_table() {
     SymbolTable * new_table = new_symbol_table();
     new_table->next = current_table;
     symbol_table = new_table;
-    printf("Pushing symbol table %p\n", symbol_table);
 }
 
 void pop_symbol_table() {
-    printf("Popping symbol table %p\n", symbol_table);
     SymbolTable * current_table = symbol_table;
     if (current_table) {
         symbol_table = current_table->next;
@@ -51,6 +50,10 @@ void * symbol_table_get(SymbolTable * this, const char * const key) {
 
 void * symbol_table_put(SymbolTable * this, const char * const key, void * value) {
     return hash_table_put(this->hash_table, key, value);
+}
+
+void * symbol_table_remove(SymbolTable * this, const char * const key) {
+    return hash_table_remove(this->hash_table, key);
 }
 
 IdentifierEntry * new_identifier_entry(
