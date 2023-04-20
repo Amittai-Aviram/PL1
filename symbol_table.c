@@ -32,13 +32,12 @@ void push_symbol_table() {
     SymbolTable * current_table = symbol_table;
     SymbolTable * new_table = new_symbol_table();
     new_table->next = current_table;
-    if (current_table) {
-        current_table->next = NULL;
-    }
     symbol_table = new_table;
+    printf("Pushing symbol table %p\n", symbol_table);
 }
 
 void pop_symbol_table() {
+    printf("Popping symbol table %p\n", symbol_table);
     SymbolTable * current_table = symbol_table;
     if (current_table) {
         symbol_table = current_table->next;

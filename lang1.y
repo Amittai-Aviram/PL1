@@ -87,8 +87,8 @@ block : block_start block_rest
       ;
 
 block_start : LBRACE {
-    if (symbol_table->unit) {
-        symbol_table->unit = 0;
+    if (symbol_table->unit_started) {
+        symbol_table->unit_started = 0;
     } else {
         push_symbol_table();
     }

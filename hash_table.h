@@ -51,12 +51,13 @@ HashTable * new_hash_table();
 void delete_hash_table(HashTable * this);
 void * hash_table_get(HashTable * this, const char * const key);
 void * hash_table_put(HashTable * this, const char * const key, void * const value);
+void * hash_table_remove(HashTable * this, const char * const key);
 
 // PRIVATE FUNCTIONS
+Entry * hash_table_get_entry(HashTable * this, const char * const key, Entry ** pred, int * idx);
 Entry * hash_table_new_entry(const char * const key, void * const value);
 int hash_table_hash_code(const char * const key);
 int hash_table_find_index(HashTable * this, const char * const key);
 int hash_table_is_empty(HashTable * this);
 void hash_table_copy_into_table(HashTable * this, Entry * old_entry, Entry ** new_table);
 void hash_table_resize_table(HashTable * this, Direction direction);
-void hash_table_print(HashTable * this);

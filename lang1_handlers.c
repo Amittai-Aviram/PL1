@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,15 @@ extern int label_no;
 extern LabelNo * true_label_no_stack;
 extern LabelNo * false_label_no_stack;
 extern SymbolTable * symbol_table;
+
+void report_error(const char * format, ...) {
+    char msg[MESSAGE_SIZE];
+    va_list args;
+    va_start(args, format);
+    vsprintf(msg, format, args);
+    va_end(args);
+    yyerror(msg);
+}
 
 LabelNo * new_label_no(int num) {
     LabelNo * new_no = malloc(sizeof(LabelNo));
@@ -167,7 +177,9 @@ void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
 
 void handle_assignment(Info * lhs, Info * source, Info * destination) {
     IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, destination->string);
-    if (entry && entry->id_type == VAR) {
+    if (entry) {
+        if (entry->id_type != VAR) {
+        }
         strcpy(destination->string, entry->symbol);
     }
     printf("mov %s, %s\n", source->string, destination->string);
@@ -185,7 +197,7 @@ void handle_arg(Info * arg, Info * expression) {
 
 void handle_unit_id(Info * identifier) {
     push_symbol_table();
-    symbol_table->unit = 1;
+    symbol_table->unit_started = 1;
     label_no = 0;
     printf("_%s:\n", identifier->string);
 }
@@ -202,10 +214,8 @@ void handle_param(Info * lhs, Info * var_decl) {
 void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
     IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
     if (id_entry->line_num >= 0) {
-        char msg[MESSAGE_SIZE];
-        sprintf(msg, "Error (line %d): identifier %s has already been declared at line %d.\n",
+        report_error("Error (line %d): identifier %s has already been declared at line %d.\n",
                 line_no - 1, identifier->string, id_entry->line_num);
-        yyerror(msg);
     }
     id_entry->id_type = VAR;
     id_entry->type_id = decl_type;
@@ -240,6 +250,7 @@ void handle_number(Info * lhs, Info * num) {
 
 void handle_identifier_lexeme(Info * val, char * text) {
     if (!symbol_table_get(symbol_table, text)) {
+        printf("Inserting %s into symbol table %p\n", text, symbol_table);
         symbol_table_put(symbol_table, text, new_identifier_entry(text, -1, -1, -1));
     }
     strcpy(val->string, text);

@@ -11,11 +11,12 @@
 typedef enum IdentifierType { NONE, VAR, FUNC, PROC } IdentifierType;
 
 typedef struct SymbolTable {
+    char name[LEXEME_SIZE];
     struct HashTable * hash_table;
     int reg_no;
     int mem_no;
     int param_no;
-    int unit;
+    int unit_started;
     struct SymbolTable * next;
 } SymbolTable;
 

@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "hash_table.h"
-#include "symbol_table.h"
 
 static int primes[] = PRIMES;
 
@@ -41,30 +40,6 @@ void delete_hash_table(HashTable * this) {
     free(this);
 }
 
-Entry * hash_table_new_entry(const char * const key, void * const value) {
-    Entry * entry = malloc(sizeof(Entry));
-    if (!entry) {
-        perror("New Entry");
-        exit(EXIT_FAILURE);
-    }
-    strcpy(entry->key, key);
-    entry->value = value;
-    return entry;
-}
-
-int hash_table_hash_code(const char * const key) {
-    const char * key_addr = key;
-    int code = 0;
-    while (*key_addr) {
-        code += (int)*key_addr++;
-    }
-    return code;
-}
-
-int hash_table_find_index(HashTable * this, const char * const key) {
-    return (abs((int)hash_table_hash_code(key) * this->scale + this->shift) % PRIME) % this->capacity;
-}
-
 void * hash_table_put(HashTable * this, const char * const key, void * const value) {
     int index = hash_table_find_index(this, key);
     if (!this->table[index]) {
@@ -91,26 +66,88 @@ void * hash_table_put(HashTable * this, const char * const key, void * const val
     return NULL;
 }
 
-int hash_table_is_empty(HashTable * this) {
-    return this->size == 0;
+void * hash_table_get(HashTable * this, const char * const key) {
+    Entry * entry = hash_table_get_entry(this, key, NULL, NULL);
+    if (entry) {
+        return entry->value;
+    }
+    return NULL;
 }
 
-void * hash_table_get(HashTable * this, const char * const key) {
+void * hash_table_remove(HashTable * this, const char * const key) {
+    Entry * previous = NULL;
+    int index;
+    Entry * entry = hash_table_get_entry(this, key, &previous, &index);
+    if (!entry) {
+        return NULL;
+    }
+    if (previous) {
+        previous->next = entry->next;
+    } else {
+        this->table[index] = NULL;
+    }
+    void * answer = entry->value;
+    entry->next = NULL;
+    free(entry);
+    --this->size;
+    this->load_factor = (double) this->size / (double) this->capacity;
+    if (this->load_factor < MIN_LOAD_FACTOR) {
+        hash_table_resize_table(this, DOWN);
+    }
+    return answer;
+}
+
+Entry * hash_table_get_entry(HashTable * this, const char * const key, Entry ** pred, int * idx) {
     if (hash_table_is_empty(this)) {
         return NULL;
     }
     int index = hash_table_find_index(this, key);
+    if (idx) {
+        *idx = index;
+    }
     if (!this->table[index]) {
         return NULL;
     }
     Entry * entry = this->table[index];
     while (entry) {
         if (!strcmp(entry->key, key)) {
-            return entry->value;
+            return entry;
+        }
+        if (pred) {
+            *pred = entry;
         }
         entry = entry->next;
     }
     return NULL;
+}
+
+int hash_table_is_empty(HashTable * this) {
+    return this->size == 0;
+}
+
+Entry * hash_table_new_entry(const char * const key, void * const value) {
+    Entry * entry = malloc(sizeof(Entry));
+    if (!entry) {
+        perror("New Entry");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(entry->key, key);
+    entry->value = value;
+    entry->next = NULL;
+    return entry;
+}
+
+int hash_table_hash_code(const char * const key) {
+    const char * key_addr = key;
+    int code = 0;
+    while (*key_addr) {
+        code += (int)*key_addr++;
+    }
+    return code;
+}
+
+int hash_table_find_index(HashTable * this, const char * const key) {
+    return (abs((int)hash_table_hash_code(key) * this->scale + this->shift) % PRIME) % this->capacity;
 }
 
 void hash_table_copy_into_table(HashTable * this, Entry * old_entry, Entry ** new_table) {
@@ -159,19 +196,3 @@ void hash_table_resize_table(HashTable * this, Direction direction) {
     this->table = new_table;
 }
 
-void hash_table_print(HashTable * this) {
-    for (int i = 0; i < this->capacity; ++i) {
-        if (this->table[i]) {
-            Entry * entry = this->table[i];
-            while (entry) {
-                printf("\tKey: %s\n", entry->key);
-                puts("\tValue:");
-                IdentifierEntry * id_entry = (IdentifierEntry *)entry->value;
-                printf("\t%s\n", id_entry->lexeme);
-                printf("\t%s\n", id_entry->symbol);
-                printf("\t%d\n", id_entry->type_id);
-                entry = entry->next;
-            }
-        }
-    }
-}
