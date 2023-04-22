@@ -181,7 +181,7 @@ void handle_assignment(Info * lhs, Info * source, Info * destination) {
     if (entry) {
         if (entry->id_type != VAR) {
         }
-        strcpy(destination->string, entry->symbol);
+        strcpy(destination->string, entry->info.var_info.symbol);
     }
     printf("mov %s, %s\n", source->string, destination->string);
     if (lhs) {
@@ -197,11 +197,6 @@ void handle_arg(Info * arg, Info * expression) {
 }
 
 void handle_unit_id(Info * identifier) {
-    char * unit_id = symbol_table_remove(symbol_table, identifier->string);
-    if (!unit_id) {
-        report_error("Unit identifier %s is missing from the symbol table.\n");
-    }
-    strcpy(symbol_table->name, unit_id);
     push_symbol_table();
     symbol_table->unit_started = 1;
     label_no = 0;
@@ -224,11 +219,11 @@ void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
                 identifier->string, id_entry->line_num);
     }
     id_entry->id_type = VAR;
-    id_entry->type_id = decl_type;
+    id_entry->info.var_info.type_id = decl_type;
     id_entry->line_num = line_no;
-    get_new_mem(id_entry->symbol);
-    strcpy(lhs->string, id_entry->symbol);
-    lhs->type_id = id_entry->type_id;
+    get_new_mem(id_entry->info.var_info.symbol);
+    strcpy(lhs->string, id_entry->info.var_info.symbol);
+    lhs->type_id = id_entry->info.var_info.type_id;
 }
 
 void handle_initialization(Info * var_decl, Info * value) {
@@ -256,14 +251,16 @@ void handle_number(Info * lhs, Info * num) {
 
 void handle_identifier_lexeme(Info * val, char * text) {
     if (!symbol_table_get(symbol_table, text)) {
-        symbol_table_put(symbol_table, text, new_identifier_entry(text, -1, -1, -1));
+        symbol_table_put(symbol_table, text, new_identifier_entry(text));
     }
     strcpy(val->string, text);
 }
 
 void handle_identifier(Info * lhs, Info * identifier) {
     IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
-    strcpy(lhs->string, entry->symbol);
-    lhs->type_id = entry->type_id;
+    if (entry->id_type == VAR) {
+        strcpy(lhs->string, entry->info.var_info.symbol);
+        lhs->type_id = entry->info.var_info.type_id;
+    }
 }
 

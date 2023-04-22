@@ -12,7 +12,6 @@ extern SymbolTable * symbol_table;
 
 SymbolTable * new_symbol_table() {
     SymbolTable * new_table = malloc(sizeof(SymbolTable));
-    bzero(new_table->name, LEXEME_SIZE);
     new_table->hash_table = new_hash_table();
     new_table->reg_no = 0;
     new_table->mem_no = 0;
@@ -44,6 +43,14 @@ void pop_symbol_table() {
     }
 }
 
+SymbolTable * get_global_symbol_table() {
+    SymbolTable * table = symbol_table;
+    while (table->next) {
+        table = table->next;
+    }
+    return table;
+}
+
 void * symbol_table_get(SymbolTable * this, const char * const key) {
     return hash_table_get(this->hash_table, key);
 }
@@ -56,14 +63,11 @@ void * symbol_table_remove(SymbolTable * this, const char * const key) {
     return hash_table_remove(this->hash_table, key);
 }
 
-IdentifierEntry * new_identifier_entry(
-        const char * const lexeme, const int type_id, const int base_type_id, const int line_num
-        ) {
+IdentifierEntry * new_identifier_entry(const char * const lexeme) {
     IdentifierEntry * entry = malloc(sizeof(IdentifierEntry));
+    bzero(entry, sizeof(IdentifierEntry));
     strcpy(entry->lexeme, lexeme);
-    entry->type_id = type_id;
-    entry->base_type_id = base_type_id;
-    entry->line_num = line_num;
+    entry->line_num = -1;
     return entry;
 }
 

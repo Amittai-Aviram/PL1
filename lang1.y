@@ -25,6 +25,7 @@ LabelNo * false_label_no_stack;
     Info info;
     char string[LEXEME_SIZE];
     int type_id;
+    ParamTypeInfo param_type_ids;
 }
 
 %code provides {
@@ -42,6 +43,7 @@ LabelNo * false_label_no_stack;
 %type <info> expression arithmetic_expression relational_expression logical_expression
 %type <info> function_call_expression dereference_expression procedure_id function_id 
 %type <info> variable_declaration param arg
+%type <param_type_ids> params
 
 %left OR
 %left AND
@@ -80,7 +82,7 @@ procedure_id : PROCEDURE IDENTIFIER { handle_unit_id(&$2); }
 function_id : FUNCTION IDENTIFIER { handle_unit_id(&$2); }
             ;
 
-params_list : LPAREN params RPAREN
+params_list : LPAREN params RPAREN { printf("NUM PARAMS: %d\n", $2.num); }
             ;
 
 block : block_start block_rest
@@ -100,9 +102,9 @@ block_rest : statements RBRACE { pop_symbol_table(); }
 
 
 
-params : params COMMA param
-       | param
-       |
+params : params COMMA param { $$.type_ids[$$.num] = $3.type_id; ++$$.num; }
+       | param { $$.type_ids[0] = $1.type_id; $$.num = 1; }
+       | { $$.num = 0; }
        ;
 
 param : variable_declaration { handle_param(&$$, &$1); }
@@ -161,6 +163,7 @@ iteration_statement : WHILE LPAREN expression RPAREN LBRACE expression RBRACE
                     ;
 
 return_statement : RETURN expression PERIOD { printf("mov %s, $ret\n", $2.string); printf("ret\n"); }
+                 ;
 
 variable_declaration : IDENTIFIER COLON type_expression { handle_variable_declaration( &$$, &$1, $3); }
                      ;

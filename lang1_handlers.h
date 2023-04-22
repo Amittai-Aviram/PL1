@@ -1,9 +1,16 @@
+#include "symbol_table.h"
+
 #define MESSAGE_SIZE 256
 
 typedef struct Info {
     char string[256];
     int type_id;
 } Info;
+
+typedef struct ParamTypeInfo {
+    int num;
+    int type_ids[MAX_NUM_PARAMS];
+} ParamTypeInfo;
 
 typedef struct LabelNo {
     int num;
