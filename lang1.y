@@ -197,11 +197,11 @@ function_call_expression : IDENTIFIER LPAREN args RPAREN { handle_function_call_
                          ;
 
 dereference_expression : DEREFERENCE IDENTIFIER {
-    get_new_register($$.string);
+    get_new_register($$.string, INT8_TYPE);
     printf("%s = address %s\n", $$.string, $2.string);
 }
                        | DEREFERENCE LPAREN expression RPAREN
-                           { get_new_register($$.string); printf("%s = address %s\n", $$.string, $3.string); }
+                           { get_new_register($$.string, INT8_TYPE); printf("%s = address %s\n", $$.string, $3.string); }
                        ;
 
 

@@ -56,8 +56,28 @@ int pop_label_no(int true) {
     return answer;
 }
 
-void get_new_register(char * buffer) {
-    sprintf(buffer, "$r%d", symbol_table->reg_no++);
+int type_id_to_size(int type_id) {
+    switch (type_id) {
+        case INT1_TYPE:
+        case UINT1_TYPE:
+            return 1;
+        case INT2_TYPE:
+        case UINT2_TYPE:
+            return 2;
+        case INT4_TYPE:
+        case UINT4_TYPE:
+            return 4;
+        case INT8_TYPE:
+        case UINT8_TYPE:
+            return 8;
+        default:
+            report_error("Unexpected type id: %d.\n", type_id);
+            return -1;
+    }
+}
+
+void get_new_register(char * buffer, int type_id) {
+    sprintf(buffer, "$r%d_%d", type_id_to_size(type_id), symbol_table->reg_no++);
 }
 
 void get_new_mem(char * buffer) {
@@ -78,7 +98,7 @@ int is_register(Info * expr) {
 
 void move_to_register(Info * expr) {
     char new_reg[SYMBOL_SIZE];
-    get_new_register(new_reg);
+    get_new_register(new_reg, expr->type_id);
     printf("mov %s, %s\n", expr->string, new_reg); 
     strcpy(expr->string, new_reg);
 }
@@ -230,7 +250,7 @@ void handle_identifier(Info * lhs, Info * identifier) {
 void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
     if (!is_register(b)) {
         char new_reg[SYMBOL_SIZE];
-        get_new_register(new_reg);
+        get_new_register(new_reg, b->type_id);
         printf("mov %s, %s\n", b->string, new_reg);
         strcpy(b->string, new_reg);
     }
@@ -262,7 +282,7 @@ void handle_unary_minus_expression(Info * lhs, Info * expr) {
 }
 
 void handle_relational_expression(Info * lhs, int op, Info * a, Info * b) {
-    get_new_register(lhs->string);
+    get_new_register(lhs->string, INT1_TYPE);
     lhs->type_id = BOOLEAN_TYPE;
     printf("cmp %s, %s\n", b->string, a->string);
     printf("set");
