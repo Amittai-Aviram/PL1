@@ -22,8 +22,8 @@ LabelNo * new_label_no(int num);
 int push_label_no(int true);
 int pop_label_no(int true);
 void get_new_register(char * bufferi, int type_id);
-void get_new_mem(char * buffer);
-void get_new_param(char * buffer);
+void get_new_mem(char * buffer, int type_id);
+void get_new_param(char * buffer, int type_id);
 void reset_params();
 
 // DECLARATION HANDLERS

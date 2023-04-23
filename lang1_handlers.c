@@ -80,12 +80,12 @@ void get_new_register(char * buffer, int type_id) {
     sprintf(buffer, "$r%d_%d", type_id_to_size(type_id), symbol_table->reg_no++);
 }
 
-void get_new_mem(char * buffer) {
-    sprintf(buffer, "$m%d", symbol_table->mem_no++);
+void get_new_mem(char * buffer, int type_id) {
+    sprintf(buffer, "$m%d_%d", type_id_to_size(type_id), symbol_table->mem_no++);
 }
 
-void get_new_param(char * buffer) {
-    sprintf(buffer, "$p%d", symbol_table->param_no++);
+void get_new_param(char * buffer, int type_id) {
+    sprintf(buffer, "$p%d_%d", type_id_to_size(type_id), symbol_table->param_no++);
 }
 
 void reset_params() {
@@ -152,7 +152,7 @@ void handle_next_param(ParamTypeInfo * lhs, Info * param) {
 
 void handle_param(Info * lhs, Info * var_decl) {
     Info next_param;
-    get_new_param(next_param.string);
+    get_new_param(next_param.string, var_decl->type_id);
     next_param.type_id = var_decl->type_id;
     printf("mov %s, %s\n", next_param.string, var_decl->string);
     strcpy(lhs->string, var_decl->string);
@@ -180,7 +180,7 @@ void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
     id_entry->id_type = VAR;
     id_entry->info.var_info.type_id = decl_type;
     id_entry->line_num = line_no;
-    get_new_mem(id_entry->info.var_info.symbol);
+    get_new_mem(id_entry->info.var_info.symbol, decl_type);
     strcpy(lhs->string, id_entry->info.var_info.symbol);
     lhs->type_id = id_entry->info.var_info.type_id;
 }
@@ -364,7 +364,7 @@ void handle_next_arg(ParamTypeInfo * lhs, Info * arg) {
 
 void handle_arg(Info * arg, Info * expression) {
     reset_params();
-    get_new_param(arg->string);
+    get_new_param(arg->string, expression->type_id);
     printf("mov %s, %s\n", expression->string, arg->string);
 }
 
