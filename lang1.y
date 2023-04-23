@@ -82,34 +82,31 @@ procedure_id : PROCEDURE IDENTIFIER { handle_unit_id(&$2); }
 function_id : FUNCTION IDENTIFIER { handle_unit_id(&$2); }
             ;
 
-params_list : LPAREN params RPAREN { printf("NUM PARAMS: %d\n", $2.num); }
+params_list : LPAREN params RPAREN
             ;
 
-block : block_start block_rest
-      ;
-
-block_start : LBRACE {
-    if (symbol_table->unit_started) {
-        symbol_table->unit_started = 0;
-    } else {
-        push_symbol_table();
-    }
-}
-            ;
-
-block_rest : statements RBRACE { pop_symbol_table(); }
-           ;
-
-
-
-params : params COMMA param { $$.type_ids[$$.num] = $3.type_id; ++$$.num; }
-       | param { $$.type_ids[0] = $1.type_id; $$.num = 1; }
+params : params COMMA param { handle_next_param(&$$, &$3); }
+       | param { handle_first_param(&$$, &$1); }
        | { $$.num = 0; }
        ;
 
 param : variable_declaration { handle_param(&$$, &$1); }
       ;
 
+
+block : block_start block_rest
+      ;
+
+block_start : LBRACE { handle_block_start(); }
+            ;
+
+block_rest : statements RBRACE { handle_block_rest(); }
+           ;
+
+
+
+variable_declaration : IDENTIFIER COLON type_expression { handle_variable_declaration( &$$, &$1, $3); }
+                     ;
 
 type_expression : INT1_TYPE { $$ = $1; }
                 | UINT1_TYPE { $$ = $1; }
@@ -162,11 +159,8 @@ iteration_statement : WHILE LPAREN expression RPAREN LBRACE expression RBRACE
                        LBRACE statements RBRACE
                     ;
 
-return_statement : RETURN expression PERIOD { printf("mov %s, $ret\n", $2.string); printf("ret\n"); }
+return_statement : RETURN expression PERIOD { handle_return_statement(&$2); }
                  ;
-
-variable_declaration : IDENTIFIER COLON type_expression { handle_variable_declaration( &$$, &$1, $3); }
-                     ;
 
 expression : arithmetic_expression
            | relational_expression
@@ -199,10 +193,7 @@ logical_expression : expression AND expression { handle_logical_expression(&$$, 
         | NOT expression { handle_logical_expression(&$$, NOT, &$2, NULL); }
         ;
 
-function_call_expression : IDENTIFIER LPAREN args RPAREN {
-    strcpy($$.string, "$ret");
-    printf("call _%s\n", $1.string);
-}
+function_call_expression : IDENTIFIER LPAREN args RPAREN { handle_function_call_expression(&$$, &$1); }
                          ;
 
 dereference_expression : DEREFERENCE IDENTIFIER {

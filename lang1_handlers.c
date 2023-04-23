@@ -13,6 +13,8 @@ extern LabelNo * true_label_no_stack;
 extern LabelNo * false_label_no_stack;
 extern SymbolTable * symbol_table;
 
+// HELPERS
+
 void report_error(const char * format, ...) {
     char msg[MESSAGE_SIZE];
     sprintf(msg, "Error (line %d): ", line_no - 1);
@@ -92,6 +94,122 @@ void convert_to_boolean(Info * expr) {
     printf("test %s, %s\n", expr->string, expr->string);
     printf("setnz %s\n", expr->string);
     expr->type_id = BOOLEAN_TYPE;
+}
+
+// DECLARATION HANDLERS
+
+void handle_unit_id(Info * identifier) {
+    push_symbol_table();
+    symbol_table->unit_started = 1;
+    label_no = 0;
+    printf("_%s:\n", identifier->string);
+}
+
+void handle_first_param(ParamTypeInfo * lhs, Info * param) {
+    lhs->type_ids[0] = param->type_id;
+    lhs->num = 1;
+}
+
+void handle_next_param(ParamTypeInfo * lhs, Info * param) {
+    lhs->type_ids[lhs->num] = param->type_id;
+    ++lhs->num; 
+}
+
+void handle_param(Info * lhs, Info * var_decl) {
+    Info next_param;
+    get_new_param(next_param.string);
+    next_param.type_id = var_decl->type_id;
+    printf("mov %s, %s\n", next_param.string, var_decl->string);
+    strcpy(lhs->string, var_decl->string);
+    lhs->type_id = var_decl->type_id;
+}
+
+void handle_block_start() {
+    if (symbol_table->unit_started) {
+        symbol_table->unit_started = 0;
+    } else {
+        push_symbol_table();
+    }
+}
+
+void handle_block_rest() {
+    pop_symbol_table();
+}
+
+void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
+    IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
+    if (id_entry->line_num >= 0) {
+        report_error("Identifier %s has already been declared at line %d.\n",
+                identifier->string, id_entry->line_num);
+    }
+    id_entry->id_type = VAR;
+    id_entry->info.var_info.type_id = decl_type;
+    id_entry->line_num = line_no;
+    get_new_mem(id_entry->info.var_info.symbol);
+    strcpy(lhs->string, id_entry->info.var_info.symbol);
+    lhs->type_id = id_entry->info.var_info.type_id;
+}
+
+
+// STATEMENT HANDLERS
+
+void handle_initialization(Info * var_decl, Info * value) {
+    handle_assignment(NULL, value, var_decl);
+}
+
+void handle_assignment(Info * lhs, Info * source, Info * destination) {
+    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, destination->string);
+    if (entry) {
+        if (entry->id_type != VAR) {
+        }
+        strcpy(destination->string, entry->info.var_info.symbol);
+    }
+    printf("mov %s, %s\n", source->string, destination->string);
+    if (lhs) {
+        strcpy(lhs->string, destination->string);
+        lhs->type_id = source->type_id;
+    }
+}
+
+void handle_condition(int true) {
+    printf("_BB_%d\n", pop_label_no(true));
+}
+
+void handle_condition_head(Info * cond_expr) {
+    printf("test %s, %s\n", cond_expr->string, cond_expr->string);
+    printf("jz _BB_%d\n", push_label_no(0));
+}
+
+void handle_else() {
+    printf("jmp _BB_%d\n", push_label_no(1));
+    printf("_BB_%d\n", pop_label_no(0));
+}
+
+void handle_return_statement(Info * expression) {
+    printf("mov %s, $ret\n", expression->string);
+    printf("ret\n");
+}
+
+// EXPRESSION HANDLERS
+
+void handle_number(Info * lhs, Info * num) {
+    strcpy(lhs->string, num->string);
+    lhs->type_id = INT4_TYPE;
+}
+
+void handle_identifier_lexeme(Info * val, char * text) {
+    if (!symbol_table_get(symbol_table, text)) {
+        symbol_table_put(symbol_table, text, new_identifier_entry(text));
+    }
+    strcpy(val->string, text);
+}
+
+void handle_identifier(Info * lhs, Info * identifier) {
+    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
+    if (entry->id_type == VAR) {
+        strcpy(lhs->string, entry->info.var_info.symbol);
+        lhs->type_id = entry->info.var_info.type_id;
+    }
 }
 
 void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
@@ -176,91 +294,14 @@ void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
     }
 }
 
-void handle_assignment(Info * lhs, Info * source, Info * destination) {
-    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, destination->string);
-    if (entry) {
-        if (entry->id_type != VAR) {
-        }
-        strcpy(destination->string, entry->info.var_info.symbol);
-    }
-    printf("mov %s, %s\n", source->string, destination->string);
-    if (lhs) {
-        strcpy(lhs->string, destination->string);
-        lhs->type_id = source->type_id;
-    }
+void handle_function_call_expression(Info * lhs, Info * identifier) {
+    strcpy(lhs->string, "$ret");
+    printf("call _%s\n", identifier->string);
 }
 
 void handle_arg(Info * arg, Info * expression) {
     reset_params();
     get_new_param(arg->string);
     printf("mov %s, %s\n", expression->string, arg->string);
-}
-
-void handle_unit_id(Info * identifier) {
-    push_symbol_table();
-    symbol_table->unit_started = 1;
-    label_no = 0;
-    printf("_%s:\n", identifier->string);
-}
-
-void handle_param(Info * lhs, Info * var_decl) {
-    Info next_param;
-    get_new_param(next_param.string);
-    next_param.type_id = var_decl->type_id;
-    printf("mov %s, %s\n", next_param.string, var_decl->string);
-    strcpy(lhs->string, var_decl->string);
-    lhs->type_id = var_decl->type_id;
-}
-
-void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
-    IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
-    if (id_entry->line_num >= 0) {
-        report_error("Identifier %s has already been declared at line %d.\n",
-                identifier->string, id_entry->line_num);
-    }
-    id_entry->id_type = VAR;
-    id_entry->info.var_info.type_id = decl_type;
-    id_entry->line_num = line_no;
-    get_new_mem(id_entry->info.var_info.symbol);
-    strcpy(lhs->string, id_entry->info.var_info.symbol);
-    lhs->type_id = id_entry->info.var_info.type_id;
-}
-
-void handle_initialization(Info * var_decl, Info * value) {
-    handle_assignment(NULL, value, var_decl);
-}
-
-void handle_condition(int true) {
-    printf("_BB_%d\n", pop_label_no(true));
-}
-
-void handle_condition_head(Info * cond_expr) {
-    printf("test %s, %s\n", cond_expr->string, cond_expr->string);
-    printf("jz _BB_%d\n", push_label_no(0));
-}
-
-void handle_else() {
-    printf("jmp _BB_%d\n", push_label_no(1));
-    printf("_BB_%d\n", pop_label_no(0));
-}
-
-void handle_number(Info * lhs, Info * num) {
-    strcpy(lhs->string, num->string);
-    lhs->type_id = INT4_TYPE;
-}
-
-void handle_identifier_lexeme(Info * val, char * text) {
-    if (!symbol_table_get(symbol_table, text)) {
-        symbol_table_put(symbol_table, text, new_identifier_entry(text));
-    }
-    strcpy(val->string, text);
-}
-
-void handle_identifier(Info * lhs, Info * identifier) {
-    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
-    if (entry->id_type == VAR) {
-        strcpy(lhs->string, entry->info.var_info.symbol);
-        lhs->type_id = entry->info.var_info.type_id;
-    }
 }
 

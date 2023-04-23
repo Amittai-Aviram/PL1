@@ -29,14 +29,14 @@ identifier [a-zA-Z_][a-zA-Z_0-9]*
 {ws}
 "\n" { ++line_no; }
 boolean { yylval.type_id = BOOLEAN_TYPE; return BOOLEAN_TYPE; }
-int1 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
-uint1 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
-int2 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
-uint2 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
+int1 { yylval.type_id = INT1_TYPE; return INT4_TYPE; }
+uint1 { yylval.type_id = UINT1_TYPE; return INT4_TYPE; }
+int2 { yylval.type_id = INT2_TYPE; return INT4_TYPE; }
+uint2 { yylval.type_id = UINT2_TYPE; return INT4_TYPE; }
 int4 { yylval.type_id = INT4_TYPE; return INT4_TYPE; }
 uint4 { yylval.type_id = UINT4_TYPE; return UINT4_TYPE; }
 int8 { yylval.type_id = INT8_TYPE; return INT8_TYPE; }
-uint8 { yylval.type_id = INT8_TYPE; return INT8_TYPE; }
+uint8 { yylval.type_id = UINT8_TYPE; return INT8_TYPE; }
 addrtype { yylval.type_id = ADDRESS_TYPE; return ADDRESS_TYPE; }
 procedure { return PROCEDURE; }
 function { return FUNCTION; }
