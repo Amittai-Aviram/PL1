@@ -58,6 +58,7 @@ int pop_label_no(int true) {
 
 int type_id_to_size(int type_id) {
     switch (type_id) {
+        case BOOLEAN_TYPE:
         case INT1_TYPE:
         case UINT1_TYPE:
             return 1;
@@ -71,9 +72,16 @@ int type_id_to_size(int type_id) {
         case UINT8_TYPE:
             return 8;
         default:
-            report_error("Unexpected type id: %d.\n", type_id);
+            // report_error("Unexpected type id: %d.\n", type_id);
             return -1;
     }
+}
+
+int is_signed(int type_id) {
+    return type_id == UINT1_TYPE ||
+        type_id == UINT2_TYPE ||
+        type_id == UINT4_TYPE ||
+        type_id == UINT8_TYPE;
 }
 
 void get_new_register(char * buffer, int type_id) {
@@ -99,7 +107,7 @@ int is_register(Info * expr) {
 void move_to_register(Info * expr) {
     char new_reg[SYMBOL_SIZE];
     get_new_register(new_reg, expr->type_id);
-    printf("mov %s, %s\n", expr->string, new_reg); 
+    printf("mov%d %s, %s\n", type_id_to_size(expr->type_id), expr->string, new_reg); 
     strcpy(expr->string, new_reg);
 }
 
@@ -111,9 +119,44 @@ void convert_to_boolean(Info * expr) {
     if (!is_register(expr)) {
         move_to_register(expr);
     }
-    printf("test %s, %s\n", expr->string, expr->string);
+    printf("test%d %s, %s\n",
+            type_id_to_size(expr->type_id), expr->string, expr->string);
     printf("setnz %s\n", expr->string);
     expr->type_id = BOOLEAN_TYPE;
+}
+
+int get_common_type(Info * a, Info  * b, Info * new_a, Info * new_b) {
+    strcpy(new_a->string, a->string);
+    new_a->type_id = a->type_id;
+    strcpy(new_b->string, b->string);
+    new_b->type_id = b->type_id;
+    int common_type_id = promote_integer_type(a->type_id, b->type_id);
+    if (common_type_id > a->type_id) {
+        get_new_register(new_a->string, common_type_id);
+        new_a->type_id = common_type_id;
+        if (is_signed(a->type_id)) {
+            printf("sign_pad_mov");
+        } else {
+            printf("zero_pad_mov");
+        }
+        printf("%d%d %s, %s",
+                type_id_to_size(a->type_id),
+                type_id_to_size(common_type_id),
+                a->string, new_a->string);
+    } else if (common_type_id > b->type_id) {
+        get_new_register(new_b->string, common_type_id);
+        new_b->type_id = common_type_id;
+        if (is_signed(b->type_id)) {
+            printf("sign_pad_mov");
+        } else {
+            printf("zero_pad_mov");
+        }
+        printf("%d%d %s, %s",
+                type_id_to_size(b->type_id),
+                type_id_to_size(common_type_id),
+                b->string, new_b->string);
+    }
+    return common_type_id;
 }
 
 // DECLARATION HANDLERS
@@ -154,7 +197,8 @@ void handle_param(Info * lhs, Info * var_decl) {
     Info next_param;
     get_new_param(next_param.string, var_decl->type_id);
     next_param.type_id = var_decl->type_id;
-    printf("mov %s, %s\n", next_param.string, var_decl->string);
+    printf("mov%d %s, %s\n", type_id_to_size(var_decl->type_id),
+            next_param.string, var_decl->string);
     strcpy(lhs->string, var_decl->string);
     lhs->type_id = var_decl->type_id;
 }
@@ -193,13 +237,28 @@ void handle_initialization(Info * var_decl, Info * value) {
 }
 
 void handle_assignment(Info * lhs, Info * source, Info * destination) {
-    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, destination->string);
+    IdentifierEntry * entry =
+        (IdentifierEntry *)symbol_table_get(symbol_table, destination->string);
     if (entry) {
-        if (entry->id_type != VAR) {
-        }
         strcpy(destination->string, entry->info.var_info.symbol);
+        destination->type_id = entry->info.var_info.type_id;
     }
-    printf("mov %s, %s\n", source->string, destination->string);
+    if (destination->type_id > source->type_id) {
+        printf("DEST %d  SRC %d\n", destination->type_id, source->type_id);
+        if (is_signed(destination->type_id)) {
+            printf("sign_pad_mov%d%d %s, ",
+                    type_id_to_size(source->type_id),
+                    type_id_to_size(destination->type_id), source->string);
+        } else {
+            printf("zero_pad_mov%d%d %s, ",
+                    type_id_to_size(source->type_id),
+                    type_id_to_size(destination->type_id), source->string);
+        }
+    } else {
+        printf("mov%d %s, ",
+            type_id_to_size(destination->type_id), source->string);
+    }
+    printf("%s\n", destination->string); 
     if (lhs) {
         strcpy(lhs->string, destination->string);
         lhs->type_id = source->type_id;
@@ -211,7 +270,8 @@ void handle_condition(int true) {
 }
 
 void handle_condition_head(Info * cond_expr) {
-    printf("test %s, %s\n", cond_expr->string, cond_expr->string);
+    printf("test%d %s, %s\n",
+            type_id_to_size(cond_expr->type_id), cond_expr->string, cond_expr->string);
     printf("jz _BB_%d\n", push_label_no(0));
 }
 
@@ -221,8 +281,9 @@ void handle_else() {
 }
 
 void handle_return_statement(Info * expression) {
-    printf("mov %s, $ret\n", expression->string);
-    printf("ret\n");
+    printf("mov%d %s, $ret%d\n", type_id_to_size(expression->type_id),
+            expression->string, type_id_to_size(expression->type_id));
+    printf("ret8\n");
 }
 
 // EXPRESSION HANDLERS
@@ -251,29 +312,30 @@ void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
     if (!is_register(b)) {
         char new_reg[SYMBOL_SIZE];
         get_new_register(new_reg, b->type_id);
-        printf("mov %s, %s\n", b->string, new_reg);
+        printf("mov%d %s, %s\n", type_id_to_size(b->type_id), b->string, new_reg);
         strcpy(b->string, new_reg);
     }
+    int common_type_id = promote_integer_type(a->type_id, b->type_id);
     switch(op) {
         case PLUS:
-            printf("add ");
+            printf("add");
             break;
         case MINUS:
-            printf("sub ");
+            printf("sub");
             break;
         case TIMES:
-            printf("imul ");
+            printf("imul");
             break;
         case DIV:
-            printf("idiv ");
+            printf("idiv");
             break;
         case MOD:
-            printf("mod ");
+            printf("mod");
             break;
     }
-    printf("%s, %s\n", a->string, b->string);
+    printf("%d %s, %s\n", type_id_to_size(common_type_id), a->string, b->string);
     strcpy(lhs->string, b->string);
-    lhs->type_id = promote_integer_type(a->type_id, b->type_id);
+    lhs->type_id = common_type_id;
 }
 
 void handle_unary_minus_expression(Info * lhs, Info * expr) {
@@ -284,7 +346,10 @@ void handle_unary_minus_expression(Info * lhs, Info * expr) {
 void handle_relational_expression(Info * lhs, int op, Info * a, Info * b) {
     get_new_register(lhs->string, INT1_TYPE);
     lhs->type_id = BOOLEAN_TYPE;
-    printf("cmp %s, %s\n", b->string, a->string);
+    Info new_a, new_b;
+    int common_type_id = get_common_type(a, b, &new_a, &new_b);
+    printf("cmp%d %s, %s\n",
+            type_id_to_size(common_type_id), new_b.string, new_a.string);
     printf("set");
     switch(op) {
         case EQ:
@@ -321,15 +386,15 @@ void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
     }
     switch (op) {
         case AND:
-            printf("and %s, %s\n", a->string, b->string);
+            printf("and1 %s, %s\n", a->string, b->string);
             break;
         case OR:
-            printf("or %s, %s\n", a->string, b->string);
+            printf("or1 %s, %s\n", a->string, b->string);
             break;
     }
 }
 
-void check_parameter_types(char * identifier, ParamTypeInfo * arg_types) {
+int check_parameter_types(char * identifier, ParamTypeInfo * arg_types) {
     IdentifierEntry * entry =
         (IdentifierEntry *)symbol_table_get(get_global_symbol_table(), identifier);
     if (!entry) {
@@ -344,12 +409,14 @@ void check_parameter_types(char * identifier, ParamTypeInfo * arg_types) {
             report_error("Type mismatch in call to %s, argument %d.\n", identifier, i + 1);
         }
     }
+    return entry->info.unit_info.return_type;
 }
 
 void handle_function_call_expression(Info * lhs, Info * identifier, ParamTypeInfo * arg_types) {
-    check_parameter_types(identifier->string, arg_types);
-    strcpy(lhs->string, "$ret");
-    printf("call _%s\n", identifier->string);
+    int return_type = check_parameter_types(identifier->string, arg_types);
+    sprintf(lhs->string, "$ret%d", type_id_to_size(return_type));
+    lhs->type_id = return_type;
+    printf("call8 _%s\n", identifier->string);
 }
 
 void handle_first_arg(ParamTypeInfo * lhs, Info * arg) {
@@ -365,6 +432,6 @@ void handle_next_arg(ParamTypeInfo * lhs, Info * arg) {
 void handle_arg(Info * arg, Info * expression) {
     reset_params();
     get_new_param(arg->string, expression->type_id);
-    printf("mov %s, %s\n", expression->string, arg->string);
+    printf("mov%d %s, %s\n", type_id_to_size(arg->type_id), expression->string, arg->string);
 }
 
