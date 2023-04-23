@@ -30,8 +30,9 @@ typedef struct IdentifierEntry {
             char symbol[SYMBOL_SIZE];
         } var_info;
         struct {
+            int num_params;
             int param_types[MAX_NUM_PARAMS];
-            int ret_type;
+            int return_type;
         } unit_info;
     } info;
 } IdentifierEntry;

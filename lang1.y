@@ -43,7 +43,7 @@ LabelNo * false_label_no_stack;
 %type <info> expression arithmetic_expression relational_expression logical_expression
 %type <info> function_call_expression dereference_expression procedure_id function_id 
 %type <info> variable_declaration param arg
-%type <param_type_ids> params
+%type <param_type_ids> params params_list args
 
 %left OR
 %left AND
@@ -70,19 +70,19 @@ procedure_definition : procedure_head block
 function_definition : function_head block
                     ;
 
-procedure_head : procedure_id params_list
+procedure_head : procedure_id params_list { handle_unit_head(&$1, &$2, -1); }
                ;
 
-function_head : function_id params_list RARROW type_expression
+function_head : function_id params_list RARROW type_expression { handle_unit_head(&$1, &$2, $4); }
               ;
 
-procedure_id : PROCEDURE IDENTIFIER { handle_unit_id(&$2); }
+procedure_id : PROCEDURE IDENTIFIER { handle_unit_id(&$$, &$2); }
              ;
 
-function_id : FUNCTION IDENTIFIER { handle_unit_id(&$2); }
+function_id : FUNCTION IDENTIFIER { handle_unit_id(&$$, &$2); }
             ;
 
-params_list : LPAREN params RPAREN
+params_list : LPAREN params RPAREN { $$ = $2; }
             ;
 
 params : params COMMA param { handle_next_param(&$$, &$3); }
@@ -193,7 +193,7 @@ logical_expression : expression AND expression { handle_logical_expression(&$$, 
         | NOT expression { handle_logical_expression(&$$, NOT, &$2, NULL); }
         ;
 
-function_call_expression : IDENTIFIER LPAREN args RPAREN { handle_function_call_expression(&$$, &$1); }
+function_call_expression : IDENTIFIER LPAREN args RPAREN { handle_function_call_expression(&$$, &$1, &$3); }
                          ;
 
 dereference_expression : DEREFERENCE IDENTIFIER {
@@ -205,8 +205,9 @@ dereference_expression : DEREFERENCE IDENTIFIER {
                        ;
 
 
-args : args COMMA expression
-     | arg
+args : args COMMA expression { handle_next_arg(&$$, &$3); }
+     | arg { handle_first_arg(&$$, &$1); }
+     | { $$.num = 0; }
      ;
 
 arg : expression { handle_arg(&$$, &$1); }

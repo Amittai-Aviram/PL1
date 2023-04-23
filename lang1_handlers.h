@@ -27,7 +27,8 @@ void get_new_param(char * buffer);
 void reset_params();
 
 // DECLARATION HANDLERS
-void handle_unit_id(Info * identifier);
+void handle_unit_head(Info * id, ParamTypeInfo * params_list, int return_type_id);
+void handle_unit_id(Info * lhs, Info * identifier);
 void handle_first_param(ParamTypeInfo * lhs, Info * param);
 void handle_next_param(ParamTypeInfo * lhs, Info * param);
 void handle_param(Info * lhs, Info * var_decl);
@@ -51,6 +52,8 @@ void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b);
 void handle_unary_minus_expression(Info * lhs, Info * expr);
 void handle_relational_expression(Info * lhs, int op, Info * a, Info * b);
 void handle_logical_expression(Info * lhs, int op, Info * a, Info * b);
-void handle_function_call_expression(Info * lhs, Info * identifier);
+void handle_function_call_expression(Info * lhs, Info * identifier, ParamTypeInfo * arg_types);
+void handle_first_arg(ParamTypeInfo * lhs, Info * arg);
+void handle_next_arg(ParamTypeInfo * lhs, Info * arg);
 void handle_arg(Info * arg, Info * expression);
 

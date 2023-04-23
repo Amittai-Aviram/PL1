@@ -98,11 +98,26 @@ void convert_to_boolean(Info * expr) {
 
 // DECLARATION HANDLERS
 
-void handle_unit_id(Info * identifier) {
+void handle_unit_head(Info * id, ParamTypeInfo * params_list, int return_type_id) {
+    IdentifierEntry * entry =
+        (IdentifierEntry *)symbol_table_get(get_global_symbol_table(), id->string);
+    if (!entry) {
+        report_error("Unit identifier %s missing from global symbol table.\n", id->string);
+    }
+    entry->info.unit_info.num_params = params_list->num;
+    for (int i = 0; i < params_list->num; ++i) {
+        entry->info.unit_info.param_types[i] = params_list->type_ids[i];
+    }
+    entry->info.unit_info.return_type = return_type_id;
+}
+
+void handle_unit_id(Info * lhs, Info * identifier) {
     push_symbol_table();
     symbol_table->unit_started = 1;
     label_no = 0;
     printf("_%s:\n", identifier->string);
+    strcpy(lhs->string, identifier->string);
+    lhs->type_id = -1;
 }
 
 void handle_first_param(ParamTypeInfo * lhs, Info * param) {
@@ -294,9 +309,37 @@ void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
     }
 }
 
-void handle_function_call_expression(Info * lhs, Info * identifier) {
+void check_parameter_types(char * identifier, ParamTypeInfo * arg_types) {
+    IdentifierEntry * entry =
+        (IdentifierEntry *)symbol_table_get(get_global_symbol_table(), identifier);
+    if (!entry) {
+        report_error("A function or procedure named %s has not been defined.\n", identifier);
+    }
+    if (entry->info.unit_info.num_params != arg_types->num) {
+        report_error("Parameter-argument mistmatch: %s expects %d arguments, but %d were provided.\n",
+                identifier, entry->info.unit_info.num_params, arg_types->num);
+    }
+    for (int i = 0; i < entry->info.unit_info.num_params; ++i) {
+        if (entry->info.unit_info.param_types[i] != arg_types->type_ids[i]) {
+            report_error("Type mismatch in call to %s, argument %d.\n", identifier, i + 1);
+        }
+    }
+}
+
+void handle_function_call_expression(Info * lhs, Info * identifier, ParamTypeInfo * arg_types) {
+    check_parameter_types(identifier->string, arg_types);
     strcpy(lhs->string, "$ret");
     printf("call _%s\n", identifier->string);
+}
+
+void handle_first_arg(ParamTypeInfo * lhs, Info * arg) {
+    lhs->type_ids[0] = arg->type_id;
+    lhs->num = 1;
+}
+
+void handle_next_arg(ParamTypeInfo * lhs, Info * arg) {
+    lhs->type_ids[lhs->num] = arg->type_id;
+    ++lhs->num; 
 }
 
 void handle_arg(Info * arg, Info * expression) {
