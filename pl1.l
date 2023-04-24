@@ -7,9 +7,9 @@
 #include <string.h>
 
 #include "hash_table.h"
-#include "lang1_handlers.h"
+#include "pl1_handlers.h"
 #include "symbol_table.h"
-#include "lang1.tab.h"
+#include "pl1.tab.h"
 
 SymbolTable * symbol_table;
 int line_no = 1;

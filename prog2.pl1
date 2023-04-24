@@ -1,0 +1,5 @@
+function func(a : int2, b : int4, c : int8) -> int4 {
+    return 3.
+}
+
+    

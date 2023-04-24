@@ -1,7 +1,7 @@
-APP = lang1
+APP = pl1
 FLAGS = -Wall -DYYERROR_VERBOSE -g
 
-${APP}: ${APP}.tab.c ${APP}.lex.c hash_table.c symbol_table.c lang1_handlers.c
+${APP}: ${APP}.tab.c ${APP}.lex.c hash_table.c symbol_table.c ${APP}_handlers.c
 	gcc $(FLAGS) $^ -o $@ -ll
 
 ${APP}.tab.c: ${APP}.y

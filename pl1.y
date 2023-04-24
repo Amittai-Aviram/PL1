@@ -5,9 +5,9 @@
 #include <string.h>
 
 #include "hash_table.h"
-#include "lang1_handlers.h"
+#include "pl1_handlers.h"
 #include "symbol_table.h"
-#include "lang1.tab.h"
+#include "pl1.tab.h"
 
 int yylex();
 int yyerror(const char * msg);

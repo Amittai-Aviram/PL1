@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lang1_handlers.h"
+#include "pl1_handlers.h"
 #include "symbol_table.h"
-#include "lang1.tab.h"
+#include "pl1.tab.h"
 
 extern int line_no;
 extern int label_no;
