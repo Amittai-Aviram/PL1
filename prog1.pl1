@@ -1,3 +1,11 @@
+function loop(x : int4, n : int4) -> int4 {
+    i : int4 <- 0.
+    while (i < n) {
+        x <- x + x.
+    }
+    return x.
+}
+
 function cube(x : int4) -> int4 {
     r : int4.
     x * x * x -> r.

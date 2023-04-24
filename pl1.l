@@ -43,7 +43,7 @@ function { return FUNCTION; }
 run { return RUN; }
 if { return IF; }
 else { handle_else(); return ELSE; }
-while { return WHILE; }
+while { handle_while(); return WHILE; }
 for { return FOR; }
 from { return FROM; }
 to { return TO; }

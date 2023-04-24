@@ -55,6 +55,19 @@ void * symbol_table_get(SymbolTable * this, const char * const key) {
     return hash_table_get(this->hash_table, key);
 }
 
+void * symbol_table_get_in_scope(SymbolTable * this, const char * const key) {
+    SymbolTable * table = this;
+    void * value = NULL;
+    while (table->next) {
+        value = hash_table_get(table->hash_table, key);
+        if (value) {
+            break;
+        }
+        table = table->next;
+    }
+    return value;
+}
+
 void * symbol_table_put(SymbolTable * this, const char * const key, void * value) {
     return hash_table_put(this->hash_table, key, value);
 }

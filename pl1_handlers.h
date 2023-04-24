@@ -42,6 +42,9 @@ void handle_assignment(Info * lhs, Info * source, Info * destination);
 void handle_condition(int true);
 void handle_condition_head(Info * cond_expr);
 void handle_else();
+void handle_while();
+void handle_while_loop();
+void handle_while_head(Info * cond_expr);
 void handle_return_statement(Info * expression);
 
 // EXPRESSION HANDLERS

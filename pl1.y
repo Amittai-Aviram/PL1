@@ -154,10 +154,13 @@ conditional_statement : condition_head block ELSE block { handle_condition(1); }
 condition_head : IF LPAREN expression RPAREN { handle_condition_head(&$3); }
                ;
 
-iteration_statement : WHILE LPAREN expression RPAREN LBRACE expression RBRACE
-                    | FOR LPAREN variable_declaration FROM expression TO expression BY expression 
-                       LBRACE statements RBRACE
+iteration_statement : while_head block { handle_while_loop(); }
+                    | FOR LPAREN variable_declaration FROM expression TO expression BY expression RPAREN
+                       block
                     ;
+
+while_head : WHILE LPAREN expression RPAREN { handle_while_head(&$3); }
+           ;
 
 return_statement : RETURN expression PERIOD { handle_return_statement(&$2); }
                  ;

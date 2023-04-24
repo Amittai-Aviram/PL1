@@ -49,6 +49,7 @@ void push_symbol_table();
 void pop_symbol_table();
 SymbolTable * get_global_symbol_table();
 void * symbol_table_get(SymbolTable * this, const char * const key);
+void * symbol_table_get_in_scope(SymbolTable * this, const char * const key);
 void * symbol_table_put(SymbolTable * this, const char * const key, void * value);
 void * symbol_table_remove(SymbolTable * this, const char * const key);
 IdentifierEntry * new_identifier_entry(const char * const lexeme);

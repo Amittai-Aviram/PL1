@@ -167,6 +167,8 @@ void handle_unit_head(Info * id, ParamTypeInfo * params_list, int return_type_id
     if (!entry) {
         report_error("Unit identifier %s missing from global symbol table.\n", id->string);
     }
+    entry->id_type = return_type_id < 0 ? PROC : FUNC;
+    entry->line_num = line_no;
     entry->info.unit_info.num_params = params_list->num;
     for (int i = 0; i < params_list->num; ++i) {
         entry->info.unit_info.param_types[i] = params_list->type_ids[i];
@@ -216,9 +218,11 @@ void handle_block_rest() {
 }
 
 void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
-    IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
-    if (id_entry->line_num >= 0) {
-        report_error("Identifier %s has already been declared at line %d.\n",
+    IdentifierEntry * id_entry = (IdentifierEntry *)symbol_table_get_in_scope(symbol_table, identifier->string);
+    if (!id_entry) {
+        symbol_table_put(symbol_table, identifier->string, new_identifier_entry(identifier->string));
+    } else if (id_entry->line_num >= 0) {
+        report_error("Identifier %s has already been declared in this scope at line %d.\n",
                 identifier->string, id_entry->line_num);
     }
     id_entry->id_type = VAR;
@@ -238,7 +242,7 @@ void handle_initialization(Info * var_decl, Info * value) {
 
 void handle_assignment(Info * lhs, Info * source, Info * destination) {
     IdentifierEntry * entry =
-        (IdentifierEntry *)symbol_table_get(symbol_table, destination->string);
+        (IdentifierEntry *)symbol_table_get_in_scope(symbol_table, destination->string);
     if (entry) {
         strcpy(destination->string, entry->info.var_info.symbol);
         destination->type_id = entry->info.var_info.type_id;
@@ -270,6 +274,9 @@ void handle_condition(int true) {
 }
 
 void handle_condition_head(Info * cond_expr) {
+    if (!is_register(cond_expr)) {
+        move_to_register(cond_expr);
+    }
     printf("test%d %s, %s\n",
             type_id_to_size(cond_expr->type_id), cond_expr->string, cond_expr->string);
     printf("jz _BB_%d\n", push_label_no(0));
@@ -279,6 +286,20 @@ void handle_else() {
     printf("jmp _BB_%d\n", push_label_no(1));
     printf("_BB_%d\n", pop_label_no(0));
 }
+
+void handle_while() {
+    printf("_BB_%d\n", push_label_no(1));
+}
+
+void handle_while_loop() {
+    printf("jmp _BB_%d\n", pop_label_no(1));
+    printf("_BB_%d\n", pop_label_no(0));
+}
+
+void handle_while_head(Info * cond_expr) {
+    handle_condition_head(cond_expr);
+}
+
 
 void handle_return_statement(Info * expression) {
     printf("mov%d %s, $ret%d\n", type_id_to_size(expression->type_id),
@@ -294,14 +315,14 @@ void handle_number(Info * lhs, Info * num) {
 }
 
 void handle_identifier_lexeme(Info * val, char * text) {
-    if (!symbol_table_get(symbol_table, text)) {
+    if (!symbol_table_get_in_scope(symbol_table, text)) {
         symbol_table_put(symbol_table, text, new_identifier_entry(text));
     }
     strcpy(val->string, text);
 }
 
 void handle_identifier(Info * lhs, Info * identifier) {
-    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get(symbol_table, identifier->string);
+    IdentifierEntry * entry = (IdentifierEntry *)symbol_table_get_in_scope(symbol_table, identifier->string);
     if (entry->id_type == VAR) {
         strcpy(lhs->string, entry->info.var_info.symbol);
         lhs->type_id = entry->info.var_info.type_id;
