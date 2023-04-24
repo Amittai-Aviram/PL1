@@ -199,12 +199,8 @@ logical_expression : expression AND expression { handle_logical_expression(&$$, 
 function_call_expression : IDENTIFIER LPAREN args RPAREN { handle_function_call_expression(&$$, &$1, &$3); }
                          ;
 
-dereference_expression : DEREFERENCE IDENTIFIER {
-    get_new_register($$.string, INT8_TYPE);
-    printf("%s = address %s\n", $$.string, $2.string);
-}
-                       | DEREFERENCE LPAREN expression RPAREN
-                           { get_new_register($$.string, INT8_TYPE); printf("%s = address %s\n", $$.string, $3.string); }
+dereference_expression : DEREFERENCE IDENTIFIER { handle_dereference_expression(&$$, &$2); }
+                       | DEREFERENCE LPAREN expression RPAREN { handle_dereference_expression(&$$, &$3); }
                        ;
 
 

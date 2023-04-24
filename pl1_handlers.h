@@ -59,4 +59,5 @@ void handle_function_call_expression(Info * lhs, Info * identifier, ParamTypeInf
 void handle_first_arg(ParamTypeInfo * lhs, Info * arg);
 void handle_next_arg(ParamTypeInfo * lhs, Info * arg);
 void handle_arg(Info * arg, Info * expression);
+void handle_dereference_expression(Info * lhs, Info * identifier);
 

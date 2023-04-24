@@ -456,3 +456,8 @@ void handle_arg(Info * arg, Info * expression) {
     printf("mov%d %s, %s\n", type_id_to_size(arg->type_id), expression->string, arg->string);
 }
 
+void handle_dereference_expression(Info * lhs, Info * identifier) {
+    get_new_register(lhs->string, INT8_TYPE);
+    printf("%s = address %s\n", lhs->string, identifier->string);
+}
+
