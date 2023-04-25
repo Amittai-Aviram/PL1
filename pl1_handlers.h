@@ -27,6 +27,8 @@ void get_new_param(char * buffer, int type_id);
 void reset_params();
 
 // DECLARATION HANDLERS
+void handle_function_definition();
+void handle_procedure_definition();
 void handle_unit_head(Info * id, ParamTypeInfo * params_list, int return_type_id);
 void handle_unit_id(Info * lhs, Info * identifier);
 void handle_first_param(ParamTypeInfo * lhs, Info * param);

@@ -13,6 +13,8 @@ int yylex();
 int yyerror(const char * msg);
 
 extern FILE * yyin;
+extern FILE * yyout;
+FILE * yyerr;
 extern SymbolTable * symbol_table;
 extern int line_no;
 int label_no;
@@ -54,15 +56,15 @@ LabelNo * false_label_no_stack;
 %right DEREFERENCE UMINUS NOT
 %%
 
-program : unit_definitions { puts("Done."); }
+program : unit_definitions { fprintf(yyout, "Done.\n"); }
 
 unit_definitions : unit_definitions unit_definition
                  | unit_definition
                  ;
 
-unit_definition : procedure_definition { printf("ret\n\n"); }
-       | function_definition { putchar('\n'); }
-       ;
+unit_definition : procedure_definition { handle_procedure_definition(); }
+                | function_definition { handle_function_definition(); }
+                ;
 
 procedure_definition : procedure_head block
                      ;
@@ -134,12 +136,12 @@ statement : initialized_variable_declaration_statement
           ;
 
 initialized_variable_declaration_statement : variable_declaration LARROW expression PERIOD
-    { handle_initialization(&$1, &$3); }
+                                           { handle_initialization(&$1, &$3); }
                                            ;
 
 variable_declaration_statement : variable_declaration PERIOD
-                     ;
                                ;
+;
 assignment_statement : IDENTIFIER LARROW expression PERIOD { handle_assignment(NULL, &$3, &$1); }
                      | expression RARROW IDENTIFIER PERIOD { handle_assignment(NULL, &$1, &$3); }
                      ;
@@ -177,32 +179,27 @@ expression : arithmetic_expression
            ;
 
 arithmetic_expression : expression PLUS expression { handle_arithmetic_expression(&$$, PLUS, &$1, &$3); }
-        | expression MINUS expression { handle_arithmetic_expression(&$$, MINUS, &$1, &$3); }
-        | expression TIMES expression { handle_arithmetic_expression(&$$, TIMES, &$1, &$3); }
-        | expression DIV expression { handle_arithmetic_expression(&$$, DIV, &$1, &$3); }
-        | expression MOD expression { handle_arithmetic_expression(&$$, MOD, &$1, &$3); }
-        ;
+                      | expression MINUS expression { handle_arithmetic_expression(&$$, MINUS, &$1, &$3); }
+                      | expression TIMES expression { handle_arithmetic_expression(&$$, TIMES, &$1, &$3); }
+                      | expression DIV expression { handle_arithmetic_expression(&$$, DIV, &$1, &$3); }
+                      | expression MOD expression { handle_arithmetic_expression(&$$, MOD, &$1, &$3); }
+                      ;
 
 relational_expression : expression EQ expression { handle_relational_expression(&$$, EQ, &$1, &$3); }
-        | expression NE expression { handle_relational_expression(&$$, NE, &$1, &$3); }
-        | expression LT expression { handle_relational_expression(&$$, LT, &$1, &$3); }
-        | expression LE expression { handle_relational_expression(&$$, LE, &$1, &$3); }
-        | expression GE expression { handle_relational_expression(&$$, GE, &$1, &$3); }
-        | expression GT expression { handle_relational_expression(&$$, GT, &$1, &$3); }
-        ;
+                      | expression NE expression { handle_relational_expression(&$$, NE, &$1, &$3); }
+                      | expression LT expression { handle_relational_expression(&$$, LT, &$1, &$3); }
+                      | expression LE expression { handle_relational_expression(&$$, LE, &$1, &$3); }
+                      | expression GE expression { handle_relational_expression(&$$, GE, &$1, &$3); }
+                      | expression GT expression { handle_relational_expression(&$$, GT, &$1, &$3); }
+                      ;
 
 logical_expression : expression AND expression { handle_logical_expression(&$$, AND, &$1, &$3); }
-        | expression OR expression { handle_logical_expression(&$$, OR, &$1, &$3); }
-        | NOT expression { handle_logical_expression(&$$, NOT, &$2, NULL); }
-        ;
+                   | expression OR expression { handle_logical_expression(&$$, OR, &$1, &$3); }
+                   | NOT expression { handle_logical_expression(&$$, NOT, &$2, NULL); }
+                   ;
 
 function_call_expression : IDENTIFIER LPAREN args RPAREN { handle_function_call_expression(&$$, &$1, &$3); }
                          ;
-
-dereference_expression : DEREFERENCE IDENTIFIER { handle_dereference_expression(&$$, &$2); }
-                       | DEREFERENCE LPAREN expression RPAREN { handle_dereference_expression(&$$, &$3); }
-                       ;
-
 
 args : args COMMA expression { handle_next_arg(&$$, &$3); }
      | arg { handle_first_arg(&$$, &$1); }
@@ -210,12 +207,16 @@ args : args COMMA expression { handle_next_arg(&$$, &$3); }
      ;
 
 arg : expression { handle_arg(&$$, &$1); }
-     ;
+    ;
+
+dereference_expression : DEREFERENCE IDENTIFIER { handle_dereference_expression(&$$, &$2); }
+                       | DEREFERENCE LPAREN expression RPAREN { handle_dereference_expression(&$$, &$3); }
+                       ;
 
 %%
 
 int yyerror(const char * msg) {
-    fprintf(stderr, "%s\n", msg);
+    fprintf(yyerr, "%s\n", msg);
     exit(EXIT_FAILURE);
 }
 
@@ -226,18 +227,5 @@ FILE * fopen_checked(const char * const file_name, const char * const mode) {
         exit(EXIT_FAILURE);
     }
     return fp;
-}
-
-int main(int argc, char ** argv) {
-    if (argc > 1) {
-        yyin = fopen_checked(argv[1], "r");
-    }
-    push_symbol_table();
-    yyparse();
-    if (argc > 1) {
-        fclose(yyin);
-    }
-    pop_symbol_table();
-    return EXIT_SUCCESS;
 }
 

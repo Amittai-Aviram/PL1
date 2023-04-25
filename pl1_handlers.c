@@ -7,6 +7,7 @@
 #include "symbol_table.h"
 #include "pl1.tab.h"
 
+extern FILE * yyout;
 extern int line_no;
 extern int label_no;
 extern LabelNo * true_label_no_stack;
@@ -107,7 +108,7 @@ int is_register(Info * expr) {
 void move_to_register(Info * expr) {
     char new_reg[SYMBOL_SIZE];
     get_new_register(new_reg, expr->type_id);
-    printf("mov%d %s, %s\n", type_id_to_size(expr->type_id), expr->string, new_reg); 
+    fprintf(yyout, "mov%d %s, %s\n", type_id_to_size(expr->type_id), expr->string, new_reg); 
     strcpy(expr->string, new_reg);
 }
 
@@ -119,9 +120,9 @@ void convert_to_boolean(Info * expr) {
     if (!is_register(expr)) {
         move_to_register(expr);
     }
-    printf("test%d %s, %s\n",
+    fprintf(yyout, "test%d %s, %s\n",
             type_id_to_size(expr->type_id), expr->string, expr->string);
-    printf("setnz %s\n", expr->string);
+    fprintf(yyout, "setnz %s\n", expr->string);
     expr->type_id = BOOLEAN_TYPE;
 }
 
@@ -135,11 +136,11 @@ int get_common_type(Info * a, Info  * b, Info * new_a, Info * new_b) {
         get_new_register(new_a->string, common_type_id);
         new_a->type_id = common_type_id;
         if (is_signed(a->type_id)) {
-            printf("sign_pad_mov");
+            fprintf(yyout, "sign_pad_mov");
         } else {
-            printf("zero_pad_mov");
+            fprintf(yyout, "zero_pad_mov");
         }
-        printf("%d%d %s, %s",
+        fprintf(yyout, "%d%d %s, %s",
                 type_id_to_size(a->type_id),
                 type_id_to_size(common_type_id),
                 a->string, new_a->string);
@@ -147,11 +148,11 @@ int get_common_type(Info * a, Info  * b, Info * new_a, Info * new_b) {
         get_new_register(new_b->string, common_type_id);
         new_b->type_id = common_type_id;
         if (is_signed(b->type_id)) {
-            printf("sign_pad_mov");
+            fprintf(yyout, "sign_pad_mov");
         } else {
-            printf("zero_pad_mov");
+            fprintf(yyout, "zero_pad_mov");
         }
-        printf("%d%d %s, %s",
+        fprintf(yyout, "%d%d %s, %s",
                 type_id_to_size(b->type_id),
                 type_id_to_size(common_type_id),
                 b->string, new_b->string);
@@ -160,6 +161,14 @@ int get_common_type(Info * a, Info  * b, Info * new_a, Info * new_b) {
 }
 
 // DECLARATION HANDLERS
+
+void handle_function_definition() {
+    fprintf(yyout, "ret\n\n");
+}
+
+void handle_procedure_definition() {
+    putchar('\n');
+}
 
 void handle_unit_head(Info * id, ParamTypeInfo * params_list, int return_type_id) {
     IdentifierEntry * entry =
@@ -180,7 +189,7 @@ void handle_unit_id(Info * lhs, Info * identifier) {
     push_symbol_table();
     symbol_table->unit_started = 1;
     label_no = 0;
-    printf("_%s:\n", identifier->string);
+    fprintf(yyout, "_%s:\n", identifier->string);
     strcpy(lhs->string, identifier->string);
     lhs->type_id = -1;
 }
@@ -199,7 +208,7 @@ void handle_param(Info * lhs, Info * var_decl) {
     Info next_param;
     get_new_param(next_param.string, var_decl->type_id);
     next_param.type_id = var_decl->type_id;
-    printf("mov%d %s, %s\n", type_id_to_size(var_decl->type_id),
+    fprintf(yyout, "mov%d %s, %s\n", type_id_to_size(var_decl->type_id),
             next_param.string, var_decl->string);
     strcpy(lhs->string, var_decl->string);
     lhs->type_id = var_decl->type_id;
@@ -248,21 +257,21 @@ void handle_assignment(Info * lhs, Info * source, Info * destination) {
         destination->type_id = entry->info.var_info.type_id;
     }
     if (destination->type_id > source->type_id) {
-        printf("DEST %d  SRC %d\n", destination->type_id, source->type_id);
+        fprintf(yyout, "DEST %d  SRC %d\n", destination->type_id, source->type_id);
         if (is_signed(destination->type_id)) {
-            printf("sign_pad_mov%d%d %s, ",
+            fprintf(yyout, "sign_pad_mov%d%d %s, ",
                     type_id_to_size(source->type_id),
                     type_id_to_size(destination->type_id), source->string);
         } else {
-            printf("zero_pad_mov%d%d %s, ",
+            fprintf(yyout, "zero_pad_mov%d%d %s, ",
                     type_id_to_size(source->type_id),
                     type_id_to_size(destination->type_id), source->string);
         }
     } else {
-        printf("mov%d %s, ",
+        fprintf(yyout, "mov%d %s, ",
             type_id_to_size(destination->type_id), source->string);
     }
-    printf("%s\n", destination->string); 
+    fprintf(yyout, "%s\n", destination->string); 
     if (lhs) {
         strcpy(lhs->string, destination->string);
         lhs->type_id = source->type_id;
@@ -270,30 +279,30 @@ void handle_assignment(Info * lhs, Info * source, Info * destination) {
 }
 
 void handle_condition(int true) {
-    printf("_BB_%d\n", pop_label_no(true));
+    fprintf(yyout, "_BB_%d\n", pop_label_no(true));
 }
 
 void handle_condition_head(Info * cond_expr) {
     if (!is_register(cond_expr)) {
         move_to_register(cond_expr);
     }
-    printf("test%d %s, %s\n",
+    fprintf(yyout, "test%d %s, %s\n",
             type_id_to_size(cond_expr->type_id), cond_expr->string, cond_expr->string);
-    printf("jz _BB_%d\n", push_label_no(0));
+    fprintf(yyout, "jz _BB_%d\n", push_label_no(0));
 }
 
 void handle_else() {
-    printf("jmp _BB_%d\n", push_label_no(1));
-    printf("_BB_%d\n", pop_label_no(0));
+    fprintf(yyout, "jmp _BB_%d\n", push_label_no(1));
+    fprintf(yyout, "_BB_%d\n", pop_label_no(0));
 }
 
 void handle_while() {
-    printf("_BB_%d\n", push_label_no(1));
+    fprintf(yyout, "_BB_%d\n", push_label_no(1));
 }
 
 void handle_while_loop() {
-    printf("jmp _BB_%d\n", pop_label_no(1));
-    printf("_BB_%d\n", pop_label_no(0));
+    fprintf(yyout, "jmp _BB_%d\n", pop_label_no(1));
+    fprintf(yyout, "_BB_%d\n", pop_label_no(0));
 }
 
 void handle_while_head(Info * cond_expr) {
@@ -302,9 +311,9 @@ void handle_while_head(Info * cond_expr) {
 
 
 void handle_return_statement(Info * expression) {
-    printf("mov%d %s, $ret%d\n", type_id_to_size(expression->type_id),
+    fprintf(yyout, "mov%d %s, $ret%d\n", type_id_to_size(expression->type_id),
             expression->string, type_id_to_size(expression->type_id));
-    printf("ret8\n");
+    fprintf(yyout, "ret8\n");
 }
 
 // EXPRESSION HANDLERS
@@ -333,28 +342,28 @@ void handle_arithmetic_expression(Info * lhs, int op, Info * a, Info * b) {
     if (!is_register(b)) {
         char new_reg[SYMBOL_SIZE];
         get_new_register(new_reg, b->type_id);
-        printf("mov%d %s, %s\n", type_id_to_size(b->type_id), b->string, new_reg);
+        fprintf(yyout, "mov%d %s, %s\n", type_id_to_size(b->type_id), b->string, new_reg);
         strcpy(b->string, new_reg);
     }
     int common_type_id = promote_integer_type(a->type_id, b->type_id);
     switch(op) {
         case PLUS:
-            printf("add");
+            fprintf(yyout, "add");
             break;
         case MINUS:
-            printf("sub");
+            fprintf(yyout, "sub");
             break;
         case TIMES:
-            printf("imul");
+            fprintf(yyout, "imul");
             break;
         case DIV:
-            printf("idiv");
+            fprintf(yyout, "idiv");
             break;
         case MOD:
-            printf("mod");
+            fprintf(yyout, "mod");
             break;
     }
-    printf("%d %s, %s\n", type_id_to_size(common_type_id), a->string, b->string);
+    fprintf(yyout, "%d %s, %s\n", type_id_to_size(common_type_id), a->string, b->string);
     strcpy(lhs->string, b->string);
     lhs->type_id = common_type_id;
 }
@@ -369,30 +378,30 @@ void handle_relational_expression(Info * lhs, int op, Info * a, Info * b) {
     lhs->type_id = BOOLEAN_TYPE;
     Info new_a, new_b;
     int common_type_id = get_common_type(a, b, &new_a, &new_b);
-    printf("cmp%d %s, %s\n",
+    fprintf(yyout, "cmp%d %s, %s\n",
             type_id_to_size(common_type_id), new_b.string, new_a.string);
-    printf("set");
+    fprintf(yyout, "set");
     switch(op) {
         case EQ:
-            printf("e");
+            fprintf(yyout, "e");
             break;
         case NE:
-            printf("ne");
+            fprintf(yyout, "ne");
             break;
         case LT:
-            printf("l");
+            fprintf(yyout, "l");
             break;
         case LE:
-            printf("le");
+            fprintf(yyout, "le");
             break;
         case GE:
-            printf("ge");
+            fprintf(yyout, "ge");
             break;
         case GT:
-            printf("g");
+            fprintf(yyout, "g");
             break;
     }
-    printf(" %s\n", lhs->string);
+    fprintf(yyout, " %s\n", lhs->string);
 }
 
 void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
@@ -407,10 +416,10 @@ void handle_logical_expression(Info * lhs, int op, Info * a, Info * b) {
     }
     switch (op) {
         case AND:
-            printf("and1 %s, %s\n", a->string, b->string);
+            fprintf(yyout, "and1 %s, %s\n", a->string, b->string);
             break;
         case OR:
-            printf("or1 %s, %s\n", a->string, b->string);
+            fprintf(yyout, "or1 %s, %s\n", a->string, b->string);
             break;
     }
 }
@@ -437,7 +446,7 @@ void handle_function_call_expression(Info * lhs, Info * identifier, ParamTypeInf
     int return_type = check_parameter_types(identifier->string, arg_types);
     sprintf(lhs->string, "$ret%d", type_id_to_size(return_type));
     lhs->type_id = return_type;
-    printf("call8 _%s\n", identifier->string);
+    fprintf(yyout, "call8 _%s\n", identifier->string);
 }
 
 void handle_first_arg(ParamTypeInfo * lhs, Info * arg) {
@@ -453,11 +462,11 @@ void handle_next_arg(ParamTypeInfo * lhs, Info * arg) {
 void handle_arg(Info * arg, Info * expression) {
     reset_params();
     get_new_param(arg->string, expression->type_id);
-    printf("mov%d %s, %s\n", type_id_to_size(arg->type_id), expression->string, arg->string);
+    fprintf(yyout, "mov%d %s, %s\n", type_id_to_size(arg->type_id), expression->string, arg->string);
 }
 
 void handle_dereference_expression(Info * lhs, Info * identifier) {
     get_new_register(lhs->string, INT8_TYPE);
-    printf("%s = address %s\n", lhs->string, identifier->string);
+    fprintf(yyout, "%s = address %s\n", lhs->string, identifier->string);
 }
 

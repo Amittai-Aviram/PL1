@@ -1,5 +1,15 @@
-make
-./pl1 prog1.l1 > output.txt
-diff output.txt expected.txt
-rm output.txt
+make clean && make
+
+run_test() {
+    ./pl1
+    $1
+}
+
+test_function_definition() {
+    INPUT="function func(a : int2) { }"
+    EXPECTED="?"
+    run_test $INPUT $EXPECTED
+}
+
+test_function_definition
 
