@@ -1,6 +1,6 @@
 APP = pl1
 FLAGS = -Wall -DYYERROR_VERBOSE -g
-SOURCES = ${APP}.tab.c ${APP}.lex.c hash_table.c symbol_table.c ${APP}_handlers.c
+SOURCES = ${APP}.tab.c ${APP}.lex.c hash_table.c symbol_table.c ${APP}_handlers.c ir.c
 
 ${APP}: ${SOURCES} main.c
 	gcc $(FLAGS) $^ -o $@ -ll

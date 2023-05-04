@@ -8,7 +8,7 @@
 #include "pl1.tab.h"
 
 extern FILE * yyout;
-extern int line_no;
+extern int yylineno;
 extern int label_no;
 extern LabelNo * true_label_no_stack;
 extern LabelNo * false_label_no_stack;
@@ -18,7 +18,7 @@ extern SymbolTable * symbol_table;
 
 void report_error(const char * format, ...) {
     char msg[MESSAGE_SIZE];
-    sprintf(msg, "Error (line %d): ", line_no - 1);
+    sprintf(msg, "Error (line %d): ", yylineno);
     va_list args;
     va_start(args, format);
     vsprintf(msg + strlen(msg), format, args);
@@ -177,7 +177,7 @@ void handle_unit_head(Info * id, ParamTypeInfo * params_list, int return_type_id
         report_error("Unit identifier %s missing from global symbol table.\n", id->string);
     }
     entry->id_type = return_type_id < 0 ? PROC : FUNC;
-    entry->line_num = line_no;
+    entry->line_num = yylineno;
     entry->info.unit_info.num_params = params_list->num;
     for (int i = 0; i < params_list->num; ++i) {
         entry->info.unit_info.param_types[i] = params_list->type_ids[i];
@@ -236,7 +236,7 @@ void handle_variable_declaration(Info * lhs, Info * identifier, int decl_type) {
     }
     id_entry->id_type = VAR;
     id_entry->info.var_info.type_id = decl_type;
-    id_entry->line_num = line_no;
+    id_entry->line_num = yylineno;
     get_new_mem(id_entry->info.var_info.symbol, decl_type);
     strcpy(lhs->string, id_entry->info.var_info.symbol);
     lhs->type_id = id_entry->info.var_info.type_id;
@@ -257,7 +257,6 @@ void handle_assignment(Info * lhs, Info * source, Info * destination) {
         destination->type_id = entry->info.var_info.type_id;
     }
     if (destination->type_id > source->type_id) {
-        fprintf(yyout, "DEST %d  SRC %d\n", destination->type_id, source->type_id);
         if (is_signed(destination->type_id)) {
             fprintf(yyout, "sign_pad_mov%d%d %s, ",
                     type_id_to_size(source->type_id),

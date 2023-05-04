@@ -16,7 +16,7 @@ extern FILE * yyin;
 extern FILE * yyout;
 FILE * yyerr;
 extern SymbolTable * symbol_table;
-extern int line_no;
+extern int yylineno;
 int label_no;
 LabelNo * true_label_no_stack;
 LabelNo * false_label_no_stack;

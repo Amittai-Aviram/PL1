@@ -1,3 +1,5 @@
+%option  yylineno
+
 %{
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -12,13 +14,12 @@
 #include "pl1.tab.h"
 
 SymbolTable * symbol_table;
-int line_no = 1;
 extern int label_no;
 extern LabelNo * true_label_no_stack;
 extern LabelNo * false_label_no_stack;
 %}
 
-space [ \t]
+space [ \t\n]
 ws {space}+
 digit [0-9]
 number {digit}+
@@ -27,7 +28,6 @@ identifier [a-zA-Z_][a-zA-Z_0-9]*
 %%
 
 {ws}
-"\n" { ++line_no; }
 boolean { yylval.type_id = BOOLEAN_TYPE; return BOOLEAN_TYPE; }
 int1 { yylval.type_id = INT1_TYPE; return INT4_TYPE; }
 uint1 { yylval.type_id = UINT1_TYPE; return INT4_TYPE; }
