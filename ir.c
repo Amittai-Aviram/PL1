@@ -1,3 +1,6 @@
+/*
+ * Author: Amittai Aviram - aviram@bc.edu
+ */
 #include <stdlib.h>
 
 #include "ir.h"
