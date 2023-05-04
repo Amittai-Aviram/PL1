@@ -7,6 +7,43 @@
 
 Unit * program;
 
+const char * printable_ops[] = {
+    "mov",
+    "movs",
+    "movz",
+    "test",
+    "cmp",
+    "sete",
+    "setne",
+    "setl",
+    "setle",
+    "setge",
+    "setg",
+    "setz",
+    "setnz",
+    "jmp",
+    "je",
+    "jne",
+    "jl",
+    "jle",
+    "jge",
+    "jg",
+    "jnz",
+    "jz",
+    "add",
+    "sub",
+    "mul",
+    "imul",
+    "div",
+    "idiv",
+    "mod",
+    "and",
+    "or",
+    "call",
+    "addr",
+    "ret"
+};
+
 Unit * new_unit(UnitType unit_type, IdentifierEntry * id) {
     Unit * this = (Unit *)malloc(sizeof(Unit));
     this->unit_type = unit_type;
@@ -14,6 +51,7 @@ Unit * new_unit(UnitType unit_type, IdentifierEntry * id) {
     this->code = NULL;
     this->num_code_entries = 0;
     this->capacity = 0;
+    this->next = NULL;
     return this;
 }
 

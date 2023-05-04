@@ -91,5 +91,6 @@ typedef struct Unit {
     CodeEntry * code;
     int num_code_entries;
     int capacity;
+    struct Unit * next;
 } Unit;
 
