@@ -220,12 +220,3 @@ int yyerror(const char * msg) {
     exit(EXIT_FAILURE);
 }
 
-FILE * fopen_checked(const char * const file_name, const char * const mode) {
-    FILE * fp = fopen(file_name, mode);
-    if (!fp) {
-        perror("Could not open file");
-        exit(EXIT_FAILURE);
-    }
-    return fp;
-}
-
