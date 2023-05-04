@@ -11,6 +11,7 @@
 
 int yylex();
 int yyerror(const char * msg);
+int yywrap();
 
 extern FILE * yyin;
 extern FILE * yyout;
@@ -214,6 +215,10 @@ dereference_expression : DEREFERENCE IDENTIFIER { handle_dereference_expression(
                        ;
 
 %%
+
+int yywrap() {
+    return 1;
+}
 
 int yyerror(const char * msg) {
     fprintf(yyerr, "%s\n", msg);
