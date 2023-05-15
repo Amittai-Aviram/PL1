@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "hash_table.h"
+#include "ir.h"
 #include "pl1_handlers.h"
 #include "symbol_table.h"
 #include "pl1.tab.h"
@@ -13,6 +14,8 @@ int yylex();
 int yyerror(const char * msg);
 int yywrap();
 
+extern Unit * program_start;
+extern Unit * current_unit;
 extern FILE * yyin;
 extern FILE * yyout;
 FILE * yyerr;

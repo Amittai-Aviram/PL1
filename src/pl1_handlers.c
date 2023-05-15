@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ir.h"
 #include "pl1_handlers.h"
 #include "symbol_table.h"
 #include "pl1.tab.h"
 
+extern Unit * program_start;
+extern Unit * current_unit;
 extern FILE * yyout;
 extern int yylineno;
 extern int label_no;
@@ -108,6 +111,10 @@ int is_register(Info * expr) {
 void move_to_register(Info * expr) {
     char new_reg[SYMBOL_SIZE];
     get_new_register(new_reg, expr->type_id);
+    Addr src_addr = {ADDR_TYPE_MEM, -1, type_id_to_size(expr->type_id)};
+    Addr dest_addr = {ADDR_TYPE_REG, symbol_table->reg_no - 1, type_id_to_size(expr->type_id)};
+    Op op = {OP_MOV, type_id_to_size(expr->type_id), src_addr, dest_addr};
+    unit_add_op(current_unit, op);
     fprintf(yyout, "mov%d %s, %s\n", type_id_to_size(expr->type_id), expr->string, new_reg); 
     strcpy(expr->string, new_reg);
 }
@@ -183,6 +190,7 @@ void handle_unit_head(Info * id, ParamTypeInfo * params_list, int return_type_id
         entry->info.unit_info.param_types[i] = params_list->type_ids[i];
     }
     entry->info.unit_info.return_type = return_type_id;
+    add_unit(entry->id_type == PROC ? UNIT_PROC : UNIT_FUNC, entry);
 }
 
 void handle_unit_id(Info * lhs, Info * identifier) {

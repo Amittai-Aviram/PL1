@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ir.h"
 #include "symbol_table.h"
 #include "pl1_handlers.h"
 #include "pl1.tab.h"
@@ -29,6 +30,7 @@ int main(int argc, char ** argv) {
     }
     push_symbol_table();
     yyparse();
+    generate_code();
     if (argc > 2) {
         fclose(yyout);
     }
